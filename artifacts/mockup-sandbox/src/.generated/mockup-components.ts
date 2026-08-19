@@ -7,5 +7,6 @@ export const modules: ModuleMap = {
   "./components/mockups/khoem-ai/IQAI.tsx": () => import("../components/mockups/khoem-ai/IQAI.tsx"),
   "./components/mockups/khoem-ai/KI.tsx": () => import("../components/mockups/khoem-ai/KI.tsx"),
   "./components/mockups/khoem-ai/MIK.tsx": () => import("../components/mockups/khoem-ai/MIK.tsx"),
-  "./components/mockups/khoem-ai/Master.tsx": () => import("../components/mockups/khoem-ai/Master.tsx")
+  "./components/mockups/khoem-ai/Master.tsx": () => import("../components/mockups/khoem-ai/Master.tsx"),
+  "./components/mockups/khoem-ai/TVAI.tsx": () => import("../components/mockups/khoem-ai/TVAI.tsx")
 };
