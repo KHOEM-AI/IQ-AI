@@ -1,0 +1,910 @@
+========================================
+របាយការណ៍ស្ថាបត្យកម្មប្រព័ន្ធ KHOEM_AI
+========================================
+
+១. ការបែងចែកតួនាទី (មេ និង កូនចៅ)
+----------------------------------------
+- មេធំ (Master Hub / Backend Server)
+  * រត់នៅលើ Port 5000 (127.0.0.1:5000) ដែលមានផ្ទាំងបញ្ជាពណ៌ផ្ទៃមេឃងងឹត (KHOEM_AI 3.3 PRO - Nexus Master Dashboard)។
+  * តួនាទី៖ ជាខួរក្បាលមេ និងជាឃ្លាំងសុវត្ថិភាពកណ្តាល ផ្ទុកទិន្នន័យ (Database) កត់ត្រាប្រវត្តិប្រតិបត្តិការ គ្រប់គ្រងប្រព័ន្ធការពារ Secure Vault Matrix (ទាមទារ Master Password សម្រាប់ផ្ទៀងផ្ទាត់សិទ្ធិអំណាច) និងជាអ្នកកិនទិន្នន័យ ដាក់ច្បាប់ (Rules) និងបញ្ជាប្រព័ន្ធ AI ទាំងមូល។
+
+- កូនចៅ (Sub-modules / Frontend Client)
+  * រត់នៅលើ Port 5173 (localhost:5173) ដែលមានទំព័រ Scanner និង TV AI Khoem-AI។
+  * តួនាទី៖ ជាកញ្ចក់បង្ហាញមុខមាត់ និងជាដៃជើង (User Interface) សម្រាប់ឱ្យអ្នកប្រើប្រាស់ចុចបញ្ជា គ្មានសមត្ថភាពគណនាលោជីខលធំដុំ ឬរក្សាទុកទិន្នន័យអចិន្ត្រៃយ៍ដោយខ្លួនឯងទេ វាគ្រាន់តែជាកន្លែងទទួលបញ្ចូលទិន្នន័យ (Input) និងបង្ហាញលទ្ធផល (Output) តែប៉ុណ្ណោះ។
+
+២. របៀបដែលមេ និងកូនចៅតភ្ជាប់គ្នា (The Communication Bridge)
+----------------------------------------
+ប្រព័ន្ធទាំងពីរទាក់ទង និងបញ្ជូនទិន្នន័យឱ្យគ្នាទៅវិញទៅមកតាមរយៈ API Requests (Network Bridge) តាម ៣ ជំហានចម្បង៖
+- ជំហានទី១ (ផ្ទៀងផ្ទាត់សិទ្ធិ)៖ មុននឹងកូនចៅហ៊ានធ្វើសកម្មភាពអ្វីមួយ មេធំនៅលើ Port 5000 ត្រូវតែបើកសោ Vault តាមរយៈ Master Password ជាមុនសិន។ បើគ្មានការអនុញ្ញាតពីមេទេ កូនចៅមិនអាចទាញទិន្នន័យមកបង្ហាញបានទេ។
+- ជំហានទី២ (ការបញ្ជូនទិន្នន័យ)៖ ពេលអ្នកវាយអក្សរក្នុងប្រអប់ PAYLOAD BUFFER នៅលើទំព័រ Scanner (Port 5173) រួចចុចប៊ូតុង INITIATE កូនចៅនឹងខ្ចប់ទិន្នន័យនោះជា Payload ហើយធ្វើការ Fetch/POST ឆ្លងកាត់បណ្តាញ Local ទៅកាន់ Server មេ (Port 5000)។
+- ជំហានទី៣ (ការឆ្លើយតប)៖ មេធំទទួលបានទិន្នន័យ យកទៅរត់កិនជាមួយ Rules និង AI របស់ខ្លួន រួចបញ្ជូនលទ្ធផល (Response) មកឱ្យកូនចៅយកទៅបង្ហាញជាអក្សរក្នុងប្រអប់ INSPECTION LOG ឱ្យអ្នកឃើញនៅលើអេក្រង់។
+
+៣. ជំហានបច្ចេកទេសក្នុងការរៀបចំ និងដំណើរការ (Setup Guide)
+----------------------------------------
+ដើម្បីធានាថាប្រព័ន្ធទាំងពីរដំណើរការស្រុះគ្នាល្អដោយមិនរត់របូតពីគ្នា ត្រូវអនុវត្តតាមលំដាប់លំដោយ៖
+1. បើកដំណើរការមេធំ (Port 5000) ជាមុនសិន៖ ធានាថា Master Dashboard កំពុងរត់ដើម្បីដើរតួជាខួរក្បាលទទួលបញ្ជា។
+2. ដោះសោប្រព័ន្ធការពារ (Vault Matrix)៖ ចូលទៅកាន់ទំព័រមេ 127.0.0.1:5000 រួចវាយ Master Password ដើម្បីផ្ទៀងផ្ទាត់សិទ្ធិអំណាច។
+3. តភ្ជាប់ប្រព័ន្ធ API (API Bridge)៖ កូនចៅនៅលើ Port 5173 ត្រូវកំណត់តំណភ្ជាប់ទិន្នន័យក្នុង File vite.config.ts ឬ .env ឱ្យចង្អុលមកកាន់ Port 5000 វិញ។
+4. រត់ពាក្យបញ្ជាប្រព័ន្ធរួម (Workspace Run)៖ ប្រើប្រាស់ពាក្យបញ្ជាក្នុង Termux ឱ្យមេ និងកូនចៅដំណើរការព្រមគ្នា៖
+   cd ~/EI-T && pnpm --filter khoem-ai dev
+========================================
+import React, { useState } from 'react';
+
+// និយមន័យភាសា (4 Languages Support)
+const translations: Record = {
+  KH: {
+    title: "សព្វវចនាធិប្បាយបច្ចេកទេសសកល IQ-A",
+    subtitle: "រៀនជំនាញបច្ចេកទេស ជួសជុល និងកសិកម្មដោយឥតគិតថ្លៃ គ្រប់ពេលវេលា គ្រប់ទីកន្លែង",
+    searchPlaceholder: "ស្វែងរកមេរៀន គ្រឿងបន្លាស់ ឬបញ្ហាខូចខាត...",
+    departments: "មហាវិទ្យាល័យជំនាញទាំងឡាយ",
+    mode1: "របៀបដោះដំឡើង (Disassembly)",
+    mode2: "វិភាគអាការៈខូច (Troubleshooting)",
+    toolsRequired: "ឧបករណ៍ត្រូវត្រៀម:",
+    safetyWarning: "ការប្រុងប្រយ័ត្នខ្ពស់:",
+    freeForAll: "សិស្សប្រុស-ស្រី អាចចូលរៀនគ្រប់ជំនាញទាំងអស់ដោយសេរី១០០%"
+  },
+  EN: {
+    title: "IQ-A Global Tech Encyclopedia",
+    subtitle: "Free technical, repair, and agricultural training anytime, anywhere",
+    searchPlaceholder: "Search lessons, parts, or issues...",
+    departments: "All Departments",
+    mode1: "Disassembly & Assembly",
+    mode2: "Diagnostic & Troubleshooting",
+    toolsRequired: "Required Tools:",
+    safetyWarning: "Safety Warning:",
+    freeForAll: "Open to all genders. Learn any skill freely!"
+  },
+  CN: {
+    title: "IQ-A 全球技术百科全书",
+    subtitle: "随时随地免费学习技术、维修和农业课程",
+    searchPlaceholder: "搜索课程、零件或故障...",
+    departments: "专业学院",
+    mode1: "拆卸与组装指南",
+    mode2: "故障诊断模式",
+    toolsRequired: "所需工具:",
+    safetyWarning: "安全警告:",
+    freeForAll: "面向所有性别开放，自由学习所有技能！"
+  },
+  FR: {
+    title: "Encyclopédie Technique Globale IQ-A",
+    subtitle: "Formation gratuite en technique, réparation et agriculture partout",
+    searchPlaceholder: "Rechercher des leçons, pièces ou pannes...",
+    departments: "Départements",
+    mode1: "Guide de Démontage",
+    mode2: "Diagnostic et Dépannage",
+    toolsRequired: "Outils requis:",
+    safetyWarning: "Avertissement de sécurité:",
+    freeForAll: "Ouvert à tous les genres. Apprenez librement !"
+  }
+};
+
+export default function IQAAcademyPortal() {
+  const [lang, setLang] = useState<'KH' | 'EN' | 'CN' | 'FR'>('KH');
+  const [selectedDept, setSelectedDept] = useState(null);
+  const [teachingMode, setTeachingMode] = useState<'mode1' | 'mode2'>('mode1');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const t = translations[lang];
+
+  // បញ្ជីមហាវិទ្យាល័យទាំងមូល (រួមទាំងផ្នែកបុរស នារី និងកសិកម្ម)
+  const departments = [
+    {
+      id: 'beauty',
+      name: { KH: 'ថែទាំសម្រស់ & កាត់ដេរ (សំអាងការ)', EN: 'Beauty, Salon & Tailoring', CN: '美容、美发与裁剪', FR: 'Beauté, Salon & Couture' },
+      icon: '✂️',
+      color: 'border-pink-500 text-pink-400 bg-pink-950/20',
+      description: { KH: 'បង្រៀនកាត់ដេរម៉ូដសម្លៀកបំពាក់ សំអាងការ លាបពណ៌សក់ តុបតែងមុខ និងឌីសាញម៉ូដអន្តរជាតិ។', EN: 'Tailoring, salon, hair coloring, makeup, and fashion design.' }
+    },
+    {
+      id: 'auto',
+      name: { KH: 'យានយន្ត & មេកានិច', EN: 'Automotive & Mechanical', CN: '汽车与机械', FR: 'Automobile & Mécanique' },
+      icon: '🚗',
+      color: 'border-blue-500 text-blue-400 bg-blue-950/20',
+      description: { KH: 'ជួសជុលរថយន្ត ម៉ូតូ គ្រឿងចក្រធុនធ្ងន់ និងប្រព័ន្ធបាញ់ថ្នាំពណ៌។', EN: 'Repair cars, motorcycles, heavy machinery, and painting systems.' }
+    },
+    {
+      id: 'electric',
+      name: { KH: 'អគ្គិសនី & ប្រព័ន្ធទឹក', EN: 'Electrical & Plumbing', CN: '电气与水暖', FR: 'Électricité & Plomberie' },
+      icon: '⚡',
+      color: 'border-yellow-500 text-yellow-400 bg-yellow-950/20',
+      description: { KH: 'ប្រព័ន្ធភ្លើងក្នុងអគារ ភ្លើងយានយន្ត និងប្រព័ន្ធទឹកគ្រប់ខ្នាត។', EN: 'Building wiring, automotive electrics, and plumbing systems.' }
+    },
+    {
+      id: 'it',
+      name: { KH: 'កុំព្យូទ័រ & ស្មាតហ្វូន', EN: 'IT & Smart Electronics', CN: '电脑与智能电子', FR: 'Informatique & Électronique' },
+      icon: '💻',
+      color: 'border-purple-500 text-purple-400 bg-purple-950/20',
+      description: { KH: 'ជួសជុល Hardware/Software ទូរស័ព្ទ កុំព្យូទ័រ និងអានសៀគ្វី IC ។', EN: 'Phone/PC repair, motherboard troubleshooting, and IC circuits.' }
+    },
+    {
+      id: 'agro',
+      name: { KH: 'កសិកម្ម & ដាំដុះឆ្លាតវៃ', EN: 'Agriculture & Smart Farming', CN: '农业与智能种植', FR: 'Agriculture & Élevage' },
+      icon: '🌱',
+      color: 'border-green-500 text-green-400 bg-green-950/20',
+      description: { KH: 'បច្ចេកទេសដាំដុះ ប្រព័ន្ធទឹកស្វ័យប្រវត្ត និងការថែទាំគ្រឿងចក្រកសិកម្ម។', EN: 'Farming techniques, automated irrigation, and agricultural machinery.' }
+    },
+    {
+      id: 'cooling',
+      name: { KH: 'ម៉ាស៊ីនត្រជាក់ & គ្រឿងផ្ទះ', EN: 'Cooling & Home Appliances', CN: '制冷与家电', FR: 'Climatisation & Électroménager' },
+      icon: '❄️',
+      color: 'border-cyan-500 text-cyan-400 bg-cyan-950/20',
+      description: { KH: 'ជួសជុលទូទឹកកក ម៉ាស៊ីនត្រជាក់ កង្ហារ និងឧបករណ៍អគ្គិសនីក្នុងផ្ទះ។', EN: 'Fridges, AC units, fans, and home electronic appliances.' }
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+      
+      {/* របារខាងលើបង្អស់ (Top Header) */}
+      <header className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-4 mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+            {t.title}
+          </h1>
+          <p className="text-slate-400 text-sm">{t.subtitle}</p>
+        </div>
+
+        {/* ប៊ូតុងប្តូរភាសា (Language Switcher) */}
+        <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+          {(['KH', 'EN', 'CN', 'FR'] as const).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                lang === l ? 'bg-cyan-500 text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {l === 'KH' ? '🇰🇭 ខ្មែរ' : l === 'EN' ? '🇬🇧 EN' : l === 'CN' ? '🇨🇳 中文' : '🇫🇷 FR'}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* ប្រអប់ស្វែងរកឆ្លាតវៃ (Smart Search Bar) */}
+      <div className="max-w-2xl mx-auto mb-10 text-center">
+        <div className="relative flex items-center shadow-2xl">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t.searchPlaceholder}
+            className="w-full bg-slate-900 border border-slate-700 rounded-2xl py-4 px-6 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all text-base"
+          />
+          <div className="absolute right-4 flex items-center gap-2">
+            <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-lg border border-cyan-500/30">AI Ready</span>
+          </div>
+        </div>
+        <p className="text-xs text-slate-400 mt-2">{t.freeForAll}</p>
+      </div>
+
+      {/* ផែនទីមែកធាងមហាវិទ្យាល័យ (Knowledge Mind-Map Grid) */}
+      <section className="max-w-6xl mx-auto mb-12">
+        <h2 className="text-xl font-bold mb-6 text-slate-200 border-l-4 border-cyan-500 pl-3">
+          {t.departments}
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {departments.map((dept) => (
+            <div
+              key={dept.id}
+              onClick={() => setSelectedDept(dept)}
+              className={`border rounded-2xl p-6 cursor-pointer transition-all hover:scale-102 hover:shadow-xl ${dept.color} bg-slate-900/60 backdrop-blur-sm`}
+            >
+              <div className="text-4xl mb-3">{dept.icon}</div>
+              <h3 className="text-lg font-bold mb-2 text-white">{dept.name[lang]}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">{dept.description[lang]}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* បន្ទប់រៀនរូបភាពរស់ (Interactive Classroom Split-Screen Preview) */}
+      {selectedDept && (
+        <section className="max-w-6xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl animate-fade-in">
+          <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{selectedDept.icon}</span>
+              <div>
+                <h2 className="text-xl font-bold text-white">{selectedDept.name[lang]}</h2>
+                <span className="text-xs text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">Active AI Classroom</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedDept(null)}
+              className="text-slate-400 hover:text-white bg-slate-800 px-3 py-1.5 rounded-xl text-sm"
+            >
+              ✕ បិទ (Close)
+            </button>
+          </div>
+
+          {/* របៀបរៀន ២ ទម្រង់ (Dual Teaching Modes Selector) */}
+          <div className="flex gap-4 mb-6">
+            <button
+              onClick={() => setTeachingMode('mode1')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                teachingMode === 'mode1' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-300'
+              }`}
+            >
+              🛠️ {t.mode1}
+            </button>
+            <button
+              onClick={() => setTeachingMode('mode2')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                teachingMode === 'mode2' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-300'
+              }`}
+            >
+              🔍 {t.mode2}
+            </button>
+          </div>
+
+          {/* អេក្រង់បែងចែកពីរ (Split-Screen Layout) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ផ្នែកខាងឆ្វេង៖ អត្ថបទពន្យល់ & ជំហាន (AI Instructions) */}
+            <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-red-400 text-sm font-semibold mb-3">
+                  <span>⚠️</span> {t.safetyWarning} ពិនិត្យប្រព័ន្ធសុវត្ថិភាពមុនពេលចាប់ផ្តើម!
+                </div>
+                <div className="text-sm font-semibold text-cyan-400 mb-2">{t.toolsRequired} សោរ/ឧបករណ៍ស្តង់ដារ</div>
+                <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                  ប្រព័ន្ធ AI កំពុងវិភាគទិន្នន័យជាក់ស្តែង។ ជ្រើសរើសជំហានខាងក្រោមដើម្បីឱ្យរូបភាពរស់បង្ហាញសញ្ញាព្រួញចង្អុលបង្ហាញចំទីតាំងជាក់ស្តែង៖
+                </p>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
+                    <span>ជំហានទី ១៖ ការរៀបចំសម្ភារៈ និងការបរិយាកាស</span>
+                    <span className="text-cyan-400">ត្រៀមរួចរាល់</span>
+                  </li>
+                  <li className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
+                    <span>ជំហានទី ២៖ ការដោះដំឡើងគ្រឿងក្រៅ/សម្បក</span>
+                    <span className="text-slate-500">រង់ចាំ...</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-500 flex justify-between">
+                <span>KHOEM-AI Engine v3.3</span>
+                <span>4 Languages Synchronized</span>
+              </div>
+            </div>
+
+            {/* ផ្នែកខាងស្តាំ៖ ផ្ទាំងរូបភាពរស់ (Dynamic Canvas with Arrow & Highlights) */}
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-900/20 via-slate-950 to-slate-950"></div>
+              
+              {/* Mockup Dynamic Visual */}
+              <div className="relative z-10 text-center">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-3xl animate-pulse">
+                  🎯
+                </div>
+                <p className="text-sm font-medium text-slate-300 mb-1">ផ្ទាំងរូបភាពបច្ចេកទេសរស់ (Interactive Visual Canvas)</p>
+                <p className="text-xs text-slate-500">សញ្ញាព្រួញពណ៌ និងរង្វង់កំណត់ចំណុចខូចខាតនឹងបង្ហាញទីនេះស្វ័យប្រវត្តិ</p>
+              </div>
+
+              {/* Tag indicator */}
+              <span className="absolute top-3 right-3 bg-slate-900 border border-slate-800 text-[10px] text-cyan-400 px-2 py-1 rounded-md">
+                Live Sync Active
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
+    </div>
+  );
+}
+
+​💻 កូដប្រព័ន្ធមេ IQ-A Portal (IQA_Academy.tsx)
+
+import React, { useState } from 'react';
+
+// និយមន័យភាសា (4 Languages Support)
+const translations: Record<string, any> = {
+  KH: {
+    title: "សព្វវចនាធិប្បាយបច្ចេកទេសសកល IQ-A",
+    subtitle: "ប្រព័ន្ធបណ្តុះបណ្តាលបច្ចេកទេស និងវិទ្យាសាស្ត្រឥតគិតថ្លៃកម្រិតពិភពលោក",
+    searchPlaceholder: "ស្វែងរកមេរៀន, គ្រឿងបន្លាស់, បញ្ហាខូចខាត ឬថតរូប/និយាយ...",
+    departments: "មហាវិទ្យាល័យជំនាញទាំង ៦ របស់ប្រព័ន្ធ",
+    mode1: "ការដោះដំឡើងលម្អិត (Disassembly Guide)",
+    mode2: "វិភាគអាការៈខូច (Troubleshooting & Diagnostic)",
+    toolsRequired: "ឧបករណ៍ត្រូវត្រៀម (Required Tools):",
+    safetyWarning: "ការប្រុងប្រយ័ត្នខ្ពស់ (Safety Warning):",
+    studentProfile: "សិស្ស៖ វណ្ណា (កម្រិតទី ៣)",
+    backendStatus: "KHOEM-AI Master Engine: Active (Static Asset Vault Synchronized)"
+  },
+  EN: {
+    title: "IQ-A Global Tech Encyclopedia",
+    subtitle: "World-class free technical, engineering, and agricultural training platform",
+    searchPlaceholder: "Search lessons, parts, issues, or use voice/camera...",
+    departments: "The 6 Specialized Departments",
+    mode1: "Complete Disassembly Guide",
+    mode2: "Troubleshooting & Diagnostic Mode",
+    toolsRequired: "Required Tools:",
+    safetyWarning: "Safety Warning:",
+    studentProfile: "Student: Vanna (Level 3)",
+    backendStatus: "KHOEM-AI Master Engine: Active (Static Asset Vault Synchronized)"
+  },
+  CN: {
+    title: "IQ-A 全球技术百科全书",
+    subtitle: "世界级免费技术、工程与农业培训平台",
+    searchPlaceholder: "搜索课程、零件、故障或使用语音/相机...",
+    departments: "六大专业学院",
+    mode1: "完整拆卸与组装指南",
+    mode2: "故障诊断与排除模式",
+    toolsRequired: "所需工具:",
+    safetyWarning: "安全警告:",
+    studentProfile: "学员: Vanna (3级)",
+    backendStatus: "KHOEM-AI Master Engine: Active (Static Asset Vault Synchronized)"
+  },
+  FR: {
+    title: "Encyclopédie Technique Globale IQ-A",
+    subtitle: "Plateforme mondiale de formation technique et agricole gratuite",
+    searchPlaceholder: "Rechercher des leçons, pièces, pannes ou utiliser la voix/caméra...",
+    departments: "Les 6 Départements Spécialisés",
+    mode1: "Guide de Démontage Complet",
+    mode2: "Mode Diagnostic et Dépannage",
+    toolsRequired: "Outils requis:",
+    safetyWarning: "Avertissement de sécurité:",
+    studentProfile: "Étudiant : Vanna (Niveau 3)",
+    backendStatus: "KHOEM-AI Master Engine: Active (Static Asset Vault Synchronized)"
+  }
+};
+
+export default function IQAMasterPortal() {
+  const [lang, setLang] = useState<'KH' | 'EN' | 'CN' | 'FR'>('KH');
+  const [selectedDept, setSelectedDept] = useState<any>(null);
+  const [teachingMode, setTeachingMode] = useState<'mode1' | 'mode2'>('mode1');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const t = translations[lang];
+
+  // បញ្ជីមហាវិទ្យាល័យទាំង ៦ តាមប្លង់មេមហាមេ
+  const departments = [
+    {
+      id: 'auto',
+      name: { KH: 'យានយន្ត & មេកានិច', EN: 'Automotive & Mechanical', CN: '汽车与机械', FR: 'Automobile & Mécanique' },
+      icon: '🚗',
+      controller: 'MI-K Expert',
+      color: 'border-blue-500 text-blue-400 bg-blue-950/20 hover:bg-blue-950/40',
+      description: { KH: 'ជួសជុលរថយន្ត ម៉ូតូ គ្រឿងចក្រធុនធ្ងន់ និងប្រព័ន្ធបាញ់ថ្នាំពណ៌សាំញ៉ាំ។', EN: 'Car, motorcycle, heavy machinery repair and painting systems.' }
+    },
+    {
+      id: 'electric',
+      name: { KH: 'អគ្គិសនី & ប្រព័ន្ធទឹក', EN: 'Electrical & Plumbing', CN: '电气与水暖', FR: 'Électricité & Plomberie' },
+      icon: '⚡',
+      controller: 'EI-T Expert',
+      color: 'border-yellow-500 text-yellow-400 bg-yellow-950/20 hover:bg-yellow-950/40',
+      description: { KH: 'ប្រព័ន្ធភ្លើងក្នុងអគារ ភ្លើងយានយន្ត សៀគ្វី និងប្រព័ន្ធទុយោទឹកគ្រប់ខ្នាត។', EN: 'Building wiring, automotive electrics, and all-scale plumbing systems.' }
+    },
+    {
+      id: 'it',
+      name: { KH: 'កុំព្យូទ័រ & ស្មាតហ្វូន', EN: 'IT & Smart Electronics', CN: '电脑与智能电子', FR: 'Informatique & Électronique' },
+      icon: '💻',
+      controller: 'IT-Sys Expert',
+      color: 'border-purple-500 text-purple-400 bg-purple-950/20 hover:bg-purple-950/40',
+      description: { KH: 'ជួសជុល Hardware/Software ទូរស័ព្ទ កុំព្យូទ័រ និងការអានសៀគ្វី IC តូចៗ។', EN: 'Phone/PC hardware/software repair and micro-IC circuit reading.' }
+    },
+    {
+      id: 'agro',
+      name: { KH: 'កសិកម្ម & ដាំដុះឆ្លាតវៃ', EN: 'Agriculture & Smart Farming', CN: '农业与智能种植', FR: 'Agriculture & Élevage' },
+      icon: '🌱',
+      controller: 'AG-T Expert',
+      color: 'border-green-500 text-green-400 bg-green-950/20 hover:bg-green-950/40',
+      description: { KH: 'បច្ចេកទេសដាំដុះ ប្រព័ន្ធទឹកស្វ័យប្រវត្ត និងការថែទាំគ្រឿងចក្រកសិកម្មទំនើប។', EN: 'Farming techniques, automated irrigation, and agricultural machinery.' }
+    },
+    {
+      id: 'general',
+      name: { KH: 'បច្ចេកវិទ្យាទូទៅ & អនាគត', EN: 'General & Future Tech', CN: '通用与未来技术', FR: 'Technologie Générale' },
+      icon: '⚙️',
+      controller: 'Auto-Discovery Vault',
+      color: 'border-slate-500 text-slate-300 bg-slate-900/40 hover:bg-slate-900/80',
+      description: { KH: 'ឃ្លាំងទិន្នន័យស្វ័យប្រវត្តសម្រាប់បច្ចេកវិទ្យាថ្មីៗ កាមេរ៉ា និងអ៊ីនធឺណិត។', EN: 'Auto-updating vault for new tech, security cameras, and network systems.' }
+    },
+    {
+      id: 'beauty',
+      name: { KH: 'ថែទាំសម្រស់ សំអាងការ & កាត់ដេរ', EN: 'Beauty, Salon & Tailoring', CN: '美容、美发与裁剪', FR: 'Beauté, Salon & Couture' },
+      icon: '✂️',
+      controller: 'KI & Art Expert',
+      color: 'border-pink-500 text-pink-400 bg-pink-950/20 hover:bg-pink-950/40',
+      description: { KH: 'កាត់ដេរម៉ូដសម្លៀកបំពាក់អន្តរជាតិ សំអាងការ លាបពណ៌សក់ និងតុបតែងមុខអាជីព។', EN: 'Tailoring, salon, hair coloring, makeup, and professional fashion design.' }
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+      
+      {/* 🌐 ផ្នែកទី ១៖ ប្លង់ផ្ទៃខាងមុខទំព័រដើម (Homepage Master UI) */}
+      
+      {/* របារខាងលើបង្អស់ (Top Header) */}
+      <header className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-4 mb-8 gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center font-bold text-slate-950 text-xl shadow-lg shadow-cyan-500/30">
+            IQ
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400">
+              KHOEM-AI | IQ-A Academy
+            </h1>
+            <p className="text-slate-400 text-xs">{t.subtitle}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* ប្រវត្តិរូបសិស្ស (Student Profile Badge) */}
+          <div className="hidden sm:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
+            <span>{t.studentProfile}</span>
+          </div>
+
+          {/* ប៊ូតុងប្តូរភាសា (Language Switcher) */}
+          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+            {(['KH', 'EN', 'CN', 'FR'] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  lang === l ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {l === 'KH' ? '🇰🇭 ខ្មែរ' : l === 'EN' ? '🇬🇧 EN' : l === 'CN' ? '🇨🇳 中文' : '🇫🇷 FR'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* ចំណុចកណ្តាលអេក្រង់៖ ប្រអប់ស្វែងរកអច្ឆរិយៈ (AI Smart Search Bar) */}
+      <div className="max-w-3xl mx-auto mb-12 text-center">
+        <div className="relative flex items-center shadow-2xl">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t.searchPlaceholder}
+            className="w-full bg-slate-900/90 border border-slate-700 rounded-2xl py-4 pl-6 pr-32 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all text-sm md:text-base backdrop-blur-md"
+          />
+          <div className="absolute right-3 flex items-center gap-1.5">
+            {/* Voice Button */}
+            <button title="Voice Search" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 transition-all text-sm">
+              🎤
+            </button>
+            {/* Camera / Photo Button */}
+            <button title="Scan Part / Plant" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 transition-all text-sm">
+              📷
+            </button>
+            <span className="bg-cyan-500 text-slate-950 text-[10px] font-extrabold px-2 py-1 rounded-lg shadow">AI</span>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 mt-2">✨ បើកសិទ្ធិជូនសិស្សប្រុស-ស្រី គ្រប់រូបចូលរៀនគ្រប់ជំនាញដោយសេរី ១០០% គ្មានដែនកំណត់</p>
+      </div>
+
+      {/* តួអេក្រង់ខាងក្រោម៖ ផែនទីមែកធាងមហាវិទ្យាល័យទាំង ៦ (Knowledge Mind-Map Grid) */}
+      <section className="max-w-6xl mx-auto mb-16">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-slate-200 border-l-4 border-cyan-500 pl-3">
+            {t.departments}
+          </h2>
+          <span className="text-xs text-slate-500">គ្រប់គ្រងដោយ KHOEM-AI Master System</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {departments.map((dept) => (
+            <div
+              key={dept.id}
+              onClick={() => setSelectedDept(dept)}
+              className={`border rounded-2xl p-6 cursor-pointer transition-all hover:scale-102 hover:shadow-xl ${dept.color} bg-slate-900/60 backdrop-blur-sm relative group`}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-4xl">{dept.icon}</span>
+                <span className="text-[10px] uppercase tracking-wider bg-slate-950/60 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-md">
+                  {dept.controller}
+                </span>
+              </div>
+              <h3 className="text-lg font-bold mb-2 text-white group-hover:text-cyan-400 transition-colors">
+                {dept.name[lang]}
+              </h3>
+              <p className="text-slate-400 text-xs md:text-sm leading-relaxed">
+                {dept.description[lang]}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 🎓 ផ្នែកទី ២៖ ប្លង់បន្ទប់រៀនរូបភាពរស់ (Interactive Classroom UI - Split-Screen) */}
+      {selectedDept && (
+        <section className="max-w-6xl mx-auto bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 md:p-8 shadow-2xl animate-fade-in mb-12">
+          
+          <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{selectedDept.icon}</span>
+              <div>
+                <h2 className="text-lg md:text-xl font-bold text-white">{selectedDept.name[lang]}</h2>
+                <span className="text-xs text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                  Active Sub-System: {selectedDept.controller}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedDept(null)}
+              className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-xl text-sm transition-all"
+            >
+              ✕ បិទ (Close)
+            </button>
+          </div>
+
+          {/* របៀបរៀន ២ ទម្រង់ (Dual Teaching Modes Selector) */}
+          <div className="flex gap-4 mb-6">
+            <button
+              onClick={() => setTeachingMode('mode1')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                teachingMode === 'mode1' ? 'bg-cyan-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              🛠️ {t.mode1}
+            </button>
+            <button
+              onClick={() => setTeachingMode('mode2')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                teachingMode === 'mode2' ? 'bg-cyan-500 text-slate-950 shadow-lg' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              🔍 {t.mode2}
+            </button>
+          </div>
+
+          {/* អេក្រង់បែងចែកពីរ (Split-Screen Layout: 50% Text & 50% Visual Canvas) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* ផ្នែកខាងឆ្វេង៖ គ្រូបង្រៀន AI & អត្ថបទពន្យល់ */}
+            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div>
+                {/* ប៊ូតុងព្រមានពណ៌ក្រហម (⚠️ Safety Warning) */}
+                <div className="flex items-center gap-2 bg-red-950/40 border border-red-500/40 text-red-400 text-xs font-semibold p-2.5 rounded-xl mb-4">
+                  <span>⚠️</span> {t.safetyWarning} សូមពាក់ឧបករណ៍ការពារ និងពិនិត្យចរន្តអគ្គិសនីមុនពេលចាប់ផ្តើម!
+                </div>
+
+                {/* បញ្ជីឧបករណ៍ត្រូវប្រើ (Required Tools) */}
+                <div className="text-xs font-bold text-cyan-400 mb-2 uppercase tracking-wide">{t.toolsRequired}</div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="bg-slate-900 border border-slate-800 text-slate-300 text-xs px-3 py-1 rounded-lg">🔧 ទុយណឺវីសស្ដង់ដារ</span>
+                  <span className="bg-slate-900 border border-slate-800 text-slate-300 text-xs px-3 py-1 rounded-lg">⚡ ម៉ាស៊ីនស្ទង់ភ្លើង (Multimeter)</span>
+                  <span className="bg-slate-900 border border-slate-800 text-slate-300 text-xs px-3 py-1 rounded-lg">🛡️ ស្រោមដៃសុវត្ថិភាព</span>
+                </div>
+
+                {/* អត្ថបទជំហានស្វ័យសિંគ (Step-by-Step Sync Text) */}
+                <div className="space-y-2 text-xs text-slate-300">
+                  <div className="bg-slate-900 p-3 rounded-xl border border-cyan-500/50 flex justify-between items-center shadow-md">
+                    <span className="font-semibold text-cyan-300">ជំហានទី ១៖ ការពិនិត្យទីតាំង និងដោះគម្របការពារ</span>
+                    <span className="bg-cyan-500 text-slate-950 px-2 py-0.5 rounded font-bold text-[10px]">Active</span>
+                  </div>
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-slate-500">
+                    <span>ជំហានទី ២៖ ការផ្តាច់ប្រព័ន្ធភ្លើង ឬសៀគ្វីមេ</span>
+                    <span>រង់ចាំ...</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-500 flex justify-between">
+                <span>KHOEM-AI Synchronized Engine</span>
+                <span>4 Languages Supported</span>
+              </div>
+            </div>
+
+            {/* ផ្នែកខាងស្តាំ៖ ផ្ទាំងរូបភាពរស់ (Dynamic Canvas with Arrow & Highlights) */}
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[320px] relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-900/20 via-slate-950 to-slate-950"></div>
+              
+              {/* Mockup Dynamic Visual Component */}
+              <div className="relative z-10 text-center p-6">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-3xl animate-bounce shadow-xl shadow-cyan-500/10">
+                  🎯
+                </div>
+                <p className="text-sm font-bold text-white mb-1">Interactive Visual Canvas (Dynamic 3D/Real Photo)</p>
+                <p className="text-xs text-slate-400 mb-3">សញ្ញាព្រួញពណ៌ច្បាស់ៗ និងរង្វង់ Auto-Zoom កំពុងចង្អុលចំទីតាំងជាក់ស្តែង</p>
+                <div className="inline-flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-cyan-400">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                  KI Engine Rendering Active
+                </div>
+              </div>
+
+              {/* Tag indicator */}
+              <span className="absolute top-3 right-3 bg-slate-900/80 border border-slate-800 text-[10px] text-cyan-400 px-2.5 py-1 rounded-md backdrop-blur-sm">
+                Live Sync Enabled
+              </span>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* 🧠 ផ្នែកទី ៣៖ រចនាសម្ព័ន្ធគ្រប់គ្រងខាងក្រោយ (Backend Engine Architecture Footer Status) */}
+      <footer className="max-w-6xl mx-auto border-t border-slate-900 pt-6 text-center text-xs text-slate-600 flex flex-col md:flex-row justify-between items-center gap-2">
+        <p>{t.backendStatus}</p>
+        <p>© 2026 KHOEM-AI Global Tech Encyclopedia • All Rights Reserved</p>
+      </footer>
+
+    </div>
+  );
+}
+
+🎓 Sololearn Certificates & Learn AI Courses
+
+🎓 Sololearn Certificates
+
+1. Certificate 1
+
+2. Certificate 2
+
+3. Certificate 3
+
+4. Certificate 4
+
+5. Certificate 5
+
+6. Certificate 6
+
+7. Certificate 7
+
+8. Certificate 8
+
+9. Certificate 9
+
+10. Certificate 10
+
+11. Certificate 11
+
+12. Certificate 12
+
+13. Certificate 13
+
+14. Certificate 14
+
+15. Certificate 15
+
+16. Certificate 16
+
+17. Certificate 17
+
+18. Certificate 18
+
+19. Certificate 19
+
+20. Certificate 20
+
+21. Certificate 21
+
+22. Certificate 22
+
+23. Certificate 23
+
+🤖 Learn AI Course
+
+24. Certificate 24 (Generative AI in Practice)
+
+
+📜 ចុចទីនេះដើម្បីមើល វិញ្ញាបនបត្រ Sololearn ទាំងអស់ (Sololearn Certificates)Certificate #1 https://api2.sololearn.com/v2/certificates/CC-4WMNT8MZ/image/png?t=639211314186882960 Certificate #2 https://api2.sololearn.com/v2/certificates/CC-FQXPSLUW/image/png?t=639114126319491590 Certificate #3 https://api2.sololearn.com/v2/certificates/CC-T1WYSOHU/image/png?t=639218531599541850 Certificate #4 https://api2.sololearn.com/v2/certificates/CC-I6OFSBAU/image/png?t=639221583443257000 Certificate #5 https://api2.sololearn.com/v2/certificates/CC-IXX7OEVL/image/png?t=639129089670279240 Certificate #6 https://api2.sololearn.com/v2/certificates/CC-AYYCWFZD/image/png?t=639213017982820410 Certificate #7 https://api2.sololearn.com/v2/certificates/CC-3LIHOX01/image/png?t=639149755075790680 Certificate #8 https://api2.sololearn.com/v2/certificates/CC-HAW7ZIH5/image/png?t=639127071272290510 Certificate #9 https://api2.sololearn.com/v2/certificates/CC-U8DL49ZZ/image/png?t=639128642579113120 Certificate #10 https://api2.sololearn.com/v2/certificates/CC-SI2WZX43/image/png?t=639128879870325970 Certificate #11 https://api2.sololearn.com/v2/certificates/CC-SUOWGF8T/image/png?t=639129397891636970 Certificate #12 https://api2.sololearn.com/v2/certificates/CC-I4TIACOI/image/png?t=639129633525792890 Certificate #13 https://api2.sololearn.com/v2/certificates/CC-GT2PAJTL/image/png?t=639130145139061920 Certificate #14 https://api2.sololearn.com/v2/certificates/CC-CCYNOT2R/image/png?t=639130171535224370 Certificate #15 https://api2.sololearn.com/v2/certificates/CC-ZYSDAZM8/image/png?t=639130228680226390 Certificate #16 https://api2.sololearn.com/v2/certificates/CC-7ABADG4R/image/png?t=639130271146365570 Certificate #17 https://api2.sololearn.com/v2/certificates/CC-DBRL4YLD/image/png?t=639131460155620180 Certificate #18 https://api2.sololearn.com/v2/certificates/CC-033EXHKA/image/png?t=639132345227292480 Certificate #19 https://api2.sololearn.com/v2/certificates/CC-UYFGANZQ/image/png?t=639132373592160560 Certificate #20 https://api2.sololearn.com/v2/certificates/CC-2M47YBCR/image/png?t=639132404731128520 Certificate #21 https://api2.sololearn.com/v2/certificates/CC-WKCFVLYI/image/png?t=639132438814129950 Certificate #22 https://api2.sololearn.com/v2/certificates/CC-CRBRNFSO/image/png?t=639132486370977210 Certificate #23 https://api2.sololearn.com/v2/certificates/CC-SUEHSLUF/image/png?t=639132518202129160 Certificate #24 https://api2.sololearn.com/v2/certificates/CC-SI4N5SIB/image/png?t=639132552000527100 Certificate #25 https://api2.sololearn.com/v2/certificates/CC-ZTIH8SKI/image/png?t=639132624414342210 Certificate #26 https://api2.sololearn.com/v2/certificates/CC-OFASKCAF/image/png?t=639136631237077950 Certificate #27 https://api2.sololearn.com/v2/certificates/CC-SCJHQBG0/image/png?t=639133282834683540 Certificate #28 https://api2.sololearn.com/v2/certificates/CC-JAJVCQCJ/image/png?t=639133319713608600 Certificate #29 https://api2.sololearn.com/v2/certificates/CC-DJ9YJOG5/image/png?t=639133354278903030 Certificate #30 https://api2.sololearn.com/v2/certificates/CC-FYISPG0F/image/png?t=639139227658362860 Certificate #31 https://api2.sololearn.com/v2/certificates/CC-AXMQ8X3Q/image/png?t=639138317832565410 Certificate #32 https://api2.sololearn.com/v2/certificates/CC-OU33MLMF/image/png?t=639142032442792440 Certificate #33 https://api2.sololearn.com/v2/certificates/CC-K47BIVEI/image/png?t=639147137885562720 Certificate #34 https://api2.sololearn.com/v2/certificates/CC-AREK9EJE/image/png?t=639154446519468340 Certificate #35 https://api2.sololearn.com/v2/certificates/CC-6ZXHTBFA/image/png?t=639158173295795190 Certificate #36 https://api2.sololearn.com/v2/certificates/CC-ZDBUNAIR/image/png?t=639156230587386000 Certificate #37 https://api2.sololearn.com/v2/certificates/CC-2SCXNBZ6/image/png?t=639220875861304820 Certificate #38 https://api2.sololearn.com/v2/certificates/CC-CAZPORAO/image/png?t=639214762709896540 Certificate #39 https://api2.sololearn.com/v2/certificates/CC-S072WEWW/image/png?t=639220816092789140 Certificate #40 https://api2.sololearn.com/v2/certificates/CC-OP1HINXS/image/png?t=639222163892448310 Certificate #41 https://api2.sololearn.com/v2/certificates/CC-GPX6LLCC/image/png?t=639222232281084110 Certificate #42 https://api2.sololearn.com/v2/certificates/CC-8VRSVYY8/image/png?t=639223768700061080 Certificate #43 https://api2.sololearn.com/v2/certificates/CC-IGJZ5ICG/image/png?t=639224674159806284 Certificate #44 https://api2.sololearn.com/v2/certificates/CC-NIHNI6RW/image/png?t=639224739175951367 Certificate #45 https://api2.sololearn.com/v2/certificates/CC-PKZFLGAF/image/png?t=639224766824092049 Certificate #46 https://api2.sololearn.com/v2/certificates/CC-BXKK8SSV/image/png?t=639225729535120880 Certificate​ #47 https://api2.sololearn.com/v2/certificates/CC-L8HOE7QV/image/png?t=639227517866924285
+
+// server.js (Node.js Express Server)
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+const PORT = 5000;
+
+// អនុញ្ញាតឱ្យ Frontend (Port 5173) អាចផ្ញើ Request មកបាន
+app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(express.json());
+
+// 1. API សម្រាប់ផ្ទៀងផ្ទាត់ Master Password (Vault Matrix)
+app.post('/api/auth/vault-unlock', (req, res) => {
+  const { masterPassword } = req.body;
+
+  // កំណត់ Master Password សាកល្បង
+  if (masterPassword === 'KHOEM_MASTER_2026') {
+    return res.json({
+      success: true,
+      message: 'Secure Vault Unlocked Successfully!',
+      token: 'vault_session_token_xyz123'
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    message: 'Master Password មិនត្រឹមត្រូវទេ!'
+  });
+});
+
+// 2. API សម្រាប់ទទួល Payload វិភាគ AI (AI Inspection Engine)
+app.post('/api/ai/analyze', (req, res) => {
+  const { payload, departmentId } = req.body;
+
+  if (!payload) {
+    return res.status(400).json({ success: false, message: 'Payload ទទេ!' });
+  }
+
+  // ក្លែងធ្វើការកិនទិន្នន័យ (Mock Processing)
+  const aiResponse = {
+    status: 'INSPECTED',
+    query: payload,
+    department: departmentId || 'GENERAL',
+    diagnosticResult: `AI វិភាគឃើញថា៖ '${payload}' ទាក់ទងនឹងការពិនិត្យសៀគ្វី និងការដោះដំឡើង។`,
+    recommendedTools: ['Multimeter', 'Screw Driver Set', 'Safety Gloves'],
+    timestamp: new Date().toISOString()
+  };
+
+  res.json({ success: true, data: aiResponse });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 KHOEM_AI Master Hub running on http://127.0.0.1:${PORT}`);
+});
+import React, { useState } from 'react';
+
+const BACKEND_URL = 'http://127.0.0.1:5000';
+
+export default function IQAApiBridge() {
+  // States សម្រាប់គ្រប់គ្រង Vault Authentication
+  const [masterPassword, setMasterPassword] = useState('');
+  const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
+
+  // States សម្រាប់ AI Inspection Analysis
+  const [payloadBuffer, setPayloadBuffer] = useState('');
+  const [inspectionLog, setInspectionLog] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // 1. ជំហានទី១៖ ផ្ញើ Request ដោះសោ Vault Matrix
+  const handleUnlockVault = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthMessage('កំពុងផ្ទៀងផ្ទាត់សិទ្ធិ...');
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/vault-unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ masterPassword }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIsVaultUnlocked(true);
+        setAuthMessage('✅ ' + result.message);
+      } else {
+        setAuthMessage('❌ ' + result.message);
+      }
+    } catch (error) {
+      setAuthMessage('❌ មិនអាចភ្ជាប់ទៅកាន់ Master Server (Port 5000) បានទេ!');
+    }
+  };
+
+  // 2. ជំហានទី២៖ ផ្ញើ Payload ចេញពី Scanner ទៅកាន់ AI Server
+  const handleInitiateScan = async () => {
+    if (!payloadBuffer) return;
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ai/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payload: payloadBuffer,
+          departmentId: 'auto'
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setInspectionLog(result.data);
+      } else {
+        alert('ការវិភាគមានបញ្ហា៖ ' + result.message);
+      }
+    } catch (error) {
+      alert('⚠️ បរាជ័យក្នុងការតភ្ជាប់បណ្តាញ API Network Bridge');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-6 bg-slate-950 text-white min-h-screen space-y-6">
+      
+      {/* ផ្ទាំងដោះសោ Vault Matrix */}
+      <div className="border border-cyan-500/30 p-4 rounded-xl bg-slate-900">
+        <h3 className="text-cyan-400 font-bold mb-2">🔒 Secure Vault Matrix (Port 5000 Auth)</h3>
+        {!isVaultUnlocked ? (
+          <form onSubmit={handleUnlockVault} className="flex gap-2">
+            <input
+              type="password"
+              placeholder="វាយ Master Password (KHOEM_MASTER_2026)"
+              value={masterPassword}
+              onChange={(e) => setMasterPassword(e.target.value)}
+              className="bg-slate-950 border border-slate-700 px-3 py-2 rounded text-sm w-full"
+            />
+            <button type="submit" className="bg-cyan-500 text-slate-950 px-4 py-2 font-bold rounded text-sm">
+              Unlock
+            </button>
+          </form>
+        ) : (
+          <p className="text-green-400 text-sm font-semibold">🔓 Vault Matrix: Unlocked & Authorized</p>
+        )}
+        {authMessage && <p className="text-xs mt-2 text-slate-400">{authMessage}</p>}
+      </div>
+
+      {/* ផ្ទាំង Scanner / Payload Buffer (ទាមទារ Unlock Vault ជាមុន) */}
+      <div className={`border border-slate-800 p-4 rounded-xl bg-slate-900 ${!isVaultUnlocked && 'opacity-50 pointer-events-none'}`}>
+        <h3 className="text-slate-300 font-bold mb-2">📡 Scanner Payload Buffer</h3>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            placeholder="វាយពាក្យបញ្ជា ឬបញ្ហាខូចខាត..."
+            value={payloadBuffer}
+            onChange={(e) => setPayloadBuffer(e.target.value)}
+            className="bg-slate-950 border border-slate-700 px-3 py-2 rounded text-sm w-full"
+          />
+          <button
+            onClick={handleInitiateScan}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 font-bold rounded text-sm"
+          >
+            {loading ? 'Processing...' : 'INITIATE'}
+          </button>
+        </div>
+
+        {/* ផ្ទាំងបង្ហាញ Inspection Log */}
+        {inspectionLog && (
+          <div className="bg-slate-950 p-4 rounded border border-slate-800 font-mono text-xs">
+            <p className="text-cyan-400 font-bold mb-1">=== INSPECTION LOG ===</p>
+            <p>Status: {inspectionLog.status}</p>
+            <p>Result: {inspectionLog.diagnosticResult}</p>
+            <p>Tools: {inspectionLog.recommendedTools.join(', ')}</p>
+            <p className="text-slate-500 mt-2">Time: {inspectionLog.timestamp}</p>
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      // រាល់ Request ទាំងឡាយណាដែលចាប់ផ្តើមដោយ '/api'
+      '/api': {
+        target: 'http://127.0.0.1:5000', // អាសយដ្ឋាន Backend Server (Port 5000)
+        changeOrigin: true,
+        secure: false,
+        // បើ Backend របស់បងមិនមាន Prefix /api ទេ សូមបើក Comment បន្ទាត់ខាងក្រោម៖
+        // rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+});
+// ❌ របៀបចាស់ (ងាយជួប CORS Error)
+// const response = await fetch('http://127.0.0.1:5000/api/ai/analyze', { ... });
+
+// ✅ របៀបថ្មីប្រើ Proxy (គ្មាន CORS Error)
+const response = await fetch('/api/ai/analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    payload: payloadBuffer,
+    departmentId: 'auto'
+  }),
+});
+
+const result = await response.json();
+អបអរសាទរបង Khoem Soksivutha! ឈរជើងលេខ ១ ក្នុង Saturn League ដាច់គេតែម្តង ដោយពិន្ទនាំមុខលេខ ២ ជិត ៤ ដងឯណោះ!
+​📊 សមិទ្ធផលលើ Sololearn Profile:
+​ចំណាត់ថ្នាក់ League: លេខ ១ ក្នុង Saturn League (3,608 XP)
+​កម្រិត Level: Level 16 (Cambodia 🇰🇭)
+​ពិន្ទុសរុប (Total XP): 23,858 XP
+​Bits សរុប: 7.2K Bits
+​ស្ពីរីតនៃការប្រឹងប្រែងស្វ័យសិក្សាទាំង AI, Sololearn រហូតដល់ការឌីហ្សាញ និង Deploy ប្រព័ន្ធ KHOEM_AI លើ Termux ដោយខ្លួនឯងបែបនេះ ពិតជាអស្ចារ្យ និងគួរឱ្យកោតសរសើរមែនទែន!
