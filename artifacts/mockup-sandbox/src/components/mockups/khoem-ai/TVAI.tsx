@@ -26,7 +26,7 @@ import {
 
 import "./_group.css";
 
-type ChannelCategory = "national" | "province";
+type ChannelCategory = "international" | "national" | "province";
 type Filter = "all" | ChannelCategory;
 
 type Channel = {
@@ -40,20 +40,20 @@ type Channel = {
 };
 
 const initialChannels: Channel[] = [
-  { id: "tvk", short: "TVK", khmer: "ទូរទស្សន៍ជាតិកម្ពុជា", english: "National Television of Cambodia", province: "ជាតិ", category: "national", status: "unverified" },
-  { id: "cnc", short: "CNC", khmer: "Cambodia News Channel", english: "Cambodia News Channel", province: "ជាតិ", category: "national", status: "unverified" },
-  { id: "pnn", short: "PNN", khmer: "PNN Cambodia", english: "PNN Cambodia", province: "ជាតិ", category: "national", status: "unverified" },
-  { id: "bayon", short: "Bayon TV", khmer: "បាយ័ន TV", english: "Bayon Television", province: "ជាតិ", category: "national", status: "preparing" },
-  { id: "hang-meas", short: "Hang Meas", khmer: "ហង្សមាស HDTV", english: "Hang Meas HDTV", province: "ជាតិ", category: "national", status: "preparing" },
+  { id: "bbc", short: "BBC", khmer: "ព័ត៌មានពិភពលោក BBC", english: "BBC News", province: "ចក្រភពអង់គ្លេស", category: "international", status: "unverified" },
+  { id: "france24", short: "F24", khmer: "ព័ត៌មានអន្តរជាតិ France 24", english: "France 24", province: "បារាំង", category: "international", status: "unverified" },
+  { id: "nhk", short: "NHK", khmer: "NHK World-Japan", english: "NHK World", province: "ជប៉ុន", category: "international", status: "preparing" },
+  { id: "dw", short: "DW", khmer: "ព័ត៌មានអន្តរជាតិ DW", english: "Deutsche Welle", province: "អាល្លឺម៉ង់", category: "international", status: "preparing" },
+  { id: "aljazeera", short: "AJ", khmer: "Al Jazeera English", english: "Al Jazeera English", province: "កាតា", category: "international", status: "preparing" },
+  { id: "tvk", short: "TVK", khmer: "ទូរទស្សន៍ជាតិកម្ពុជា", english: "National Television of Cambodia", province: "កម្ពុជា · ជាតិ", category: "national", status: "unverified" },
+  { id: "cnc", short: "CNC", khmer: "ស៊ីអិនស៊ី ព័ត៌មានកម្ពុជា", english: "Cambodia News Channel", province: "កម្ពុជា · ជាតិ", category: "national", status: "unverified" },
+  { id: "pnn", short: "PNN", khmer: "PNN Cambodia", english: "PNN Cambodia", province: "កម្ពុជា · ជាតិ", category: "national", status: "unverified" },
+  { id: "bayon", short: "Bayon", khmer: "បាយ័ន TV", english: "Bayon Television", province: "កម្ពុជា · ជាតិ", category: "national", status: "preparing" },
+  { id: "hang-meas", short: "HM", khmer: "ហង្សមាស HDTV", english: "Hang Meas HDTV", province: "កម្ពុជា · ជាតិ", category: "national", status: "preparing" },
   { id: "btv", short: "BTV", khmer: "Battambang TV", english: "Battambang TV", province: "បាត់ដំបង", category: "province", status: "preparing" },
   { id: "sr-tv", short: "SR TV", khmer: "Siem Reap TV", english: "Siem Reap TV", province: "សៀមរាប", category: "province", status: "unverified" },
-  { id: "kpt-tv", short: "KPT TV", khmer: "Kampong Thom TV", english: "Kampong Thom TV", province: "កំពង់ធំ", category: "province", status: "preparing" },
-  { id: "kpc-tv", short: "KPC TV", khmer: "Kampong Cham TV", english: "Kampong Cham TV", province: "កំពង់ចាម", category: "province", status: "preparing" },
-  { id: "kps-tv", short: "KPS TV", khmer: "Kampong Speu TV", english: "Kampong Speu TV", province: "កំពង់ស្ពឺ", category: "province", status: "preparing" },
-  { id: "krt-tv", short: "KRT TV", khmer: "Kratie TV", english: "Kratie TV", province: "ក្រចេះ", category: "province", status: "unverified" },
-  { id: "kkg-tv", short: "KKG TV", khmer: "Koh Kong TV", english: "Koh Kong TV", province: "កោះកុង", category: "province", status: "preparing" },
-  { id: "kpt-tv2", short: "KPT TV2", khmer: "Kampot TV", english: "Kampot TV", province: "កំពត", category: "province", status: "unverified" },
-  { id: "srk-tv", short: "SRK TV", khmer: "Preah Sihanouk TV", english: "Preah Sihanouk TV", province: "ព្រះសីហនុ", category: "province", status: "preparing" },
+  { id: "kpt-tv", short: "KPT", khmer: "Kampong Thom TV", english: "Kampong Thom TV", province: "កំពង់ធំ", category: "province", status: "preparing" },
+  { id: "kpc-tv", short: "KPC", khmer: "Kampong Cham TV", english: "Kampong Cham TV", province: "កំពង់ចាម", category: "province", status: "preparing" },
 ];
 
 const statusCopy: Record<Channel["status"], string> = {
@@ -180,9 +180,9 @@ export function TVAI() {
 
         <section className="kh-intro">
           <div>
-            <div className="kh-eyebrow">BROADCAST CONTROL ROOM / 01</div>
-            <h1>មើលព័ត៌មានពី<br /><span>គ្រប់ខេត្តកម្ពុជា</span></h1>
-            <p>បញ្ជីប៉ុស្តិ៍ដែលបានរៀបចំសម្រាប់គ្រួសារ។ ប្រភពទាំងនេះមិនទាន់បើកជាវីដេអូបន្តផ្ទាល់នៅឡើយទេ។</p>
+            <div className="kh-eyebrow">INTERNATIONAL BROADCAST DESK / 01</div>
+            <h1>ពិភពលោកនៅក្នុង<br /><span>បង្អួចតែមួយ</span></h1>
+            <p>រៀបចំប៉ុស្តិ៍ព័ត៌មានអន្តរជាតិ ប៉ុស្តិ៍ជាតិ និងសំឡេងពីគ្រប់ខេត្តកម្ពុជា ដោយរក្សាឈ្មោះ និងប្រភពដើមរបស់ម្ចាស់ប៉ុស្តិ៍។</p>
           </div>
           <div className="kh-roster-count"><strong>{channels.length}</strong><span>ប៉ុស្តិ៍<br />ក្នុងបញ្ជី</span></div>
         </section>
@@ -236,9 +236,9 @@ export function TVAI() {
         <section className="kh-roster-section">
           <div className="kh-section-head">
             <div>
-              <div className="kh-eyebrow">CHANNEL ROSTER / {String(channels.length).padStart(2, "0")}</div>
+              <div className="kh-eyebrow">GLOBAL CHANNEL ROSTER / {String(channels.length).padStart(2, "0")}</div>
               <h2>ជ្រើសរើសប៉ុស្តិ៍</h2>
-              <p>ជាតិ និងខេត្ត នៅកន្លែងតែមួយ</p>
+              <p>អន្តរជាតិ · ជាតិ · ខេត្ត នៅកន្លែងតែមួយ</p>
             </div>
             <button className="kh-add-button kh-button" type="button" onClick={() => setShowAdd((current) => !current)}>
               {showAdd ? <X size={16} /> : <Plus size={16} />} {showAdd ? "បិទ" : "បន្ថែមប៉ុស្តិ៍ខេត្ត"}
@@ -261,9 +261,9 @@ export function TVAI() {
           <div className="kh-roster-tools">
             <div className="kh-search"><Search size={17} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ស្វែងរកប៉ុស្តិ៍ ឬ ខេត្ត…" /><kbd>⌘ K</kbd></div>
             <div className="kh-filters">
-              {(["all", "national", "province"] as Filter[]).map((item) => (
+              {(["all", "international", "national", "province"] as Filter[]).map((item) => (
                 <button key={item} className={`kh-filter-button kh-button ${filter === item ? "is-active" : ""}`} type="button" onClick={() => setFilter(item)}>
-                  {item === "all" ? "ទាំងអស់" : item === "national" ? "ជាតិ" : "ខេត្ត"}
+                  {item === "all" ? "ទាំងអស់" : item === "international" ? "អន្តរជាតិ" : item === "national" ? "ជាតិ" : "ខេត្ត"}
                   <span>{channels.filter((channel) => item === "all" || channel.category === item).length}</span>
                 </button>
               ))}
@@ -272,7 +272,7 @@ export function TVAI() {
           </div>
 
           {visibleChannels.length > 0 ? (
-            <div className="kh-channel-grid">
+              <div className="kh-channel-grid">
               {visibleChannels.map((channel, index) => {
                 const isSelected = channel.id === selectedId;
                 return (
@@ -293,7 +293,7 @@ export function TVAI() {
 
         <section className="kh-support kh-card-soft">
           <div className="kh-support-icon"><Headphones size={20} /></div>
-          <div className="kh-support-copy"><span className="kh-eyebrow">KEEP THE SIGNAL KIND</span><h2>ជួយឲ្យបញ្ជីនេះកាន់តែមានប្រយោជន៍</h2><p>ស្គាល់ប៉ុស្តិ៍ខេត្តដែលគួរបន្ថែម? ផ្ញើព័ត៌មានមកក្រុម KHOEM-AI ដើម្បីពិនិត្យប្រភព។</p></div>
+           <div className="kh-support-copy"><span className="kh-eyebrow">KEEP THE SIGNAL KIND</span><h2>បង្ហាញប្រភពដើមដោយការគោរព</h2><p>យើងមិនលាក់ឈ្មោះម្ចាស់ប៉ុស្តិ៍ទេ។ មុនពេលភ្ជាប់ប្រភពណាមួយ ត្រូវពិនិត្យការអនុញ្ញាត និងលក្ខខណ្ឌផ្សាយរបស់ម្ចាស់ប្រភពជាមុនសិន។</p></div>
           <button className="kh-support-action kh-button" type="button" onClick={() => setNotice("អរគុណ — ក្រុមការងារនឹងទាក់ទងតាមព័ត៌មានដែលបានផ្ញើ")}><Send size={16} /> ផ្ញើព័ត៌មាន <ChevronRight size={15} /></button>
         </section>
 
