@@ -34,9 +34,11 @@ export function validateUpload(buf, declaredMime) {
   return { ok: true, mime, type: mime.split('/')[0] };
 }
 
+// Keeps letters, marks and digits from any language (Khmer included); everything else becomes "_".
 export function safeFilename(name) {
   if (typeof name !== 'string' || !name) return 'upload';
   const base = name.split(/[\\/]/).pop();
-  const clean = base.replace(/[^A-Za-z0-9._-]/g, '_').replace(/^\.+/, '').slice(0, 100);
-  return clean || 'upload';
+  const clean = base.replace(/[^\p{L}\p{M}\p{N}._-]/gu, '_').replace(/^\.+/, '');
+  const trimmed = Array.from(clean).slice(0, 100).join('');
+  return trimmed || 'upload';
 }

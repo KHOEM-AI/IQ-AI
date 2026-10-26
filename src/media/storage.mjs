@@ -13,6 +13,12 @@ export function createStorage(dir) {
       await fs.writeFile(file(id, 'bin'), buf);
       await fs.writeFile(file(id, 'json'), JSON.stringify(meta));
     },
+    async saveMeta(id, meta) {
+      await ready;
+      const tmp = file(id, `json.${process.pid}.tmp`);
+      await fs.writeFile(tmp, JSON.stringify(meta));
+      await fs.rename(tmp, file(id, 'json'));
+    },
     async getMeta(id) {
       await ready;
       try {

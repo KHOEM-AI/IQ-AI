@@ -7,11 +7,6 @@ import { createRegistry } from '../media/registry.mjs';
 import { ok, fail } from './respond.mjs';
 import { handleMedia } from './routes/media.mjs';
 import { handleProcess } from './routes/process.mjs';
-import { handleEmotion } from './routes/emotion.mjs';
-import { handleAudioInspect } from './routes/audioInspect.mjs';
-import { handleImageInspect } from './routes/imageInspect.mjs';
-import { handleVideoInspect } from './routes/videoInspect.mjs';
-import { createAudioHandler } from './audioHandler.mjs';
 
 function authorized(req, token) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
@@ -25,16 +20,14 @@ export function createApp(config) {
   if (!config.token) throw new Error('IQAI_TOKEN is required');
   const registry = createRegistry(createStorage(config.storageDir));
   const ctx = { config, registry };
-  let audioHandler;
-  const getAudio = () => (audioHandler ||= createAudioHandler({ token: config.token, dataDir: process.env.AUDIO_DATA_DIR || './data/audio' }));
 
   return http.createServer(async (req, res) => {
     try {
       if (config.corsOrigin) {
         res.setHeader('Access-Control-Allow-Origin', config.corsOrigin);
         res.setHeader('Vary', 'Origin');
-        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Filename, X-Category, X-Tags, X-Source, X-License');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Filename, Range');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
         if (req.method === 'OPTIONS') {
           res.writeHead(204);
           res.end();
@@ -55,11 +48,6 @@ export function createApp(config) {
         }
         if (await handleMedia(req, res, p, ctx)) return;
         if (await handleProcess(req, res, p)) return;
-        if (await handleEmotion(req, res, p)) return;
-        if (await handleAudioInspect(req, res, p)) return;
-        if (await handleImageInspect(req, res, p)) return;
-        if (await handleVideoInspect(req, res, p)) return;
-        if (await (await getAudio())(req, res)) return;
       }
       fail(res, 404, 'not_found', 'Route not found');
     } catch (e) {

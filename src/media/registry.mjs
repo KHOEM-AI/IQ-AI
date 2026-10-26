@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { validateUpload, safeFilename } from './validation.mjs';
+import { readMetadata } from './metadata.mjs';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export const isValidId = (id) => UUID_RE.test(id);
@@ -17,6 +18,7 @@ export function createRegistry(storage) {
         size: buf.length,
         filename: safeFilename(filename),
         status: 'ready',
+        info: readMetadata(buf, v.mime),
         createdAt: new Date().toISOString(),
       };
       await storage.save(id, buf, meta);
@@ -25,6 +27,14 @@ export function createRegistry(storage) {
     get: (id) => storage.getMeta(id),
     content: (id) => storage.readContent(id),
     remove: (id) => storage.remove(id),
+    async rename(id, filename) {
+      const meta = await storage.getMeta(id);
+      if (!meta) return null;
+      meta.filename = safeFilename(filename);
+      meta.updatedAt = new Date().toISOString();
+      await storage.saveMeta(id, meta);
+      return meta;
+    },
     async list() {
       const items = await storage.listMeta();
       return items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
