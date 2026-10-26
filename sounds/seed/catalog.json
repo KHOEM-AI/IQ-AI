@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "sampleRate": 22050,
+  "note": "Synthetic approximations, not real recordings. storageKey is relative to this folder.",
+  "count": 30,
+  "items": [
+    {
+      "id": "seed-animals-bird-chirp",
+      "category": "animals",
+      "label": "សំឡេងបក្សីយំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "bird",
+        "chirp"
+      ],
+      "storageKey": "animals/bird-chirp.wav"
+    },
+    {
+      "id": "seed-animals-cricket",
+      "category": "animals",
+      "label": "សំឡេងចង្រិត (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.5,
+      "tags": [
+        "synthetic",
+        "seed",
+        "cricket",
+        "insect",
+        "night"
+      ],
+      "storageKey": "animals/cricket.wav"
+    },
+    {
+      "id": "seed-animals-dog-bark",
+      "category": "animals",
+      "label": "សំឡេងឆ្កែព្រុស (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.6,
+      "tags": [
+        "synthetic",
+        "seed",
+        "dog",
+        "bark"
+      ],
+      "storageKey": "animals/dog-bark.wav"
+    },
+    {
+      "id": "seed-human-vowel-ah",
+      "category": "human",
+      "label": "សំឡេងស្រៈ អា (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.5,
+      "tags": [
+        "synthetic",
+        "seed",
+        "voice",
+        "vowel",
+        "speech"
+      ],
+      "storageKey": "human/vowel-ah.wav"
+    },
+    {
+      "id": "seed-human-laugh",
+      "category": "human",
+      "label": "សំឡេងសើច (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "laugh",
+        "voice"
+      ],
+      "storageKey": "human/laugh.wav"
+    },
+    {
+      "id": "seed-human-hum-melody",
+      "category": "human",
+      "label": "សំឡេងទ្រហ៊ឹមបទភ្លេង (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "hum",
+        "singing",
+        "melody"
+      ],
+      "storageKey": "human/hum-melody.wav"
+    },
+    {
+      "id": "seed-vehicles-engine-idle",
+      "category": "vehicles",
+      "label": "ម៉ាស៊ីនរថយន្តរត់ទំនេរ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "engine",
+        "car",
+        "idle"
+      ],
+      "storageKey": "vehicles/engine-idle.wav"
+    },
+    {
+      "id": "seed-vehicles-car-horn",
+      "category": "vehicles",
+      "label": "សំឡេងស៊ីផ្លេរថយន្ត (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "horn",
+        "car"
+      ],
+      "storageKey": "vehicles/car-horn.wav"
+    },
+    {
+      "id": "seed-vehicles-siren",
+      "category": "vehicles",
+      "label": "សំឡេងស៊ីផ្លេសង្គ្រោះ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "siren",
+        "emergency"
+      ],
+      "storageKey": "vehicles/siren.wav"
+    },
+    {
+      "id": "seed-machines-fan-hum",
+      "category": "machines",
+      "label": "សំឡេងកង្ហារ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "fan",
+        "hum"
+      ],
+      "storageKey": "machines/fan-hum.wav"
+    },
+    {
+      "id": "seed-machines-motor-whine",
+      "category": "machines",
+      "label": "សំឡេងម៉ូទ័រ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.5,
+      "tags": [
+        "synthetic",
+        "seed",
+        "motor",
+        "whine"
+      ],
+      "storageKey": "machines/motor-whine.wav"
+    },
+    {
+      "id": "seed-machines-water-pump",
+      "category": "machines",
+      "label": "សំឡេងម៉ាស៊ីនបូមទឹក (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "pump",
+        "water",
+        "machine"
+      ],
+      "storageKey": "machines/water-pump.wav"
+    },
+    {
+      "id": "seed-nature-rain",
+      "category": "nature",
+      "label": "សំឡេងភ្លៀង (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "rain",
+        "weather"
+      ],
+      "storageKey": "nature/rain.wav"
+    },
+    {
+      "id": "seed-nature-thunder",
+      "category": "nature",
+      "label": "សំឡេងផ្គរ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "thunder",
+        "storm"
+      ],
+      "storageKey": "nature/thunder.wav"
+    },
+    {
+      "id": "seed-nature-wind",
+      "category": "nature",
+      "label": "សំឡេងខ្យល់ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "wind",
+        "weather"
+      ],
+      "storageKey": "nature/wind.wav"
+    },
+    {
+      "id": "seed-music-piano-scale",
+      "category": "music",
+      "label": "សំឡេងស្គេលព្យាណូ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "piano",
+        "scale",
+        "instrument"
+      ],
+      "storageKey": "music/piano-scale.wav"
+    },
+    {
+      "id": "seed-music-drum-beat",
+      "category": "music",
+      "label": "ចង្វាក់ស្គរ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4.8,
+      "tags": [
+        "synthetic",
+        "seed",
+        "drum",
+        "beat",
+        "rhythm"
+      ],
+      "storageKey": "music/drum-beat.wav"
+    },
+    {
+      "id": "seed-music-chord-pad",
+      "category": "music",
+      "label": "សំឡេងអាកូតតន្ត្រី (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "chord",
+        "pad",
+        "music"
+      ],
+      "storageKey": "music/chord-pad.wav"
+    },
+    {
+      "id": "seed-objects-door-knock",
+      "category": "objects",
+      "label": "សំឡេងគោះទ្វារ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.8,
+      "tags": [
+        "synthetic",
+        "seed",
+        "door",
+        "knock"
+      ],
+      "storageKey": "objects/door-knock.wav"
+    },
+    {
+      "id": "seed-objects-falling-object",
+      "category": "objects",
+      "label": "សំឡេងវត្ថុធ្លាក់ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.6,
+      "tags": [
+        "synthetic",
+        "seed",
+        "fall",
+        "impact",
+        "bounce"
+      ],
+      "storageKey": "objects/falling-object.wav"
+    },
+    {
+      "id": "seed-objects-door-creak",
+      "category": "objects",
+      "label": "សំឡេងទ្វារស្រែក (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "door",
+        "creak"
+      ],
+      "storageKey": "objects/door-creak.wav"
+    },
+    {
+      "id": "seed-signals-alarm-beep",
+      "category": "signals",
+      "label": "សំឡេងរោទ៍ព្រមាន (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "alarm",
+        "beep",
+        "warning"
+      ],
+      "storageKey": "signals/alarm-beep.wav"
+    },
+    {
+      "id": "seed-signals-notification-chime",
+      "category": "signals",
+      "label": "សំឡេងជូនដំណឹង (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.6,
+      "tags": [
+        "synthetic",
+        "seed",
+        "notification",
+        "chime",
+        "ui"
+      ],
+      "storageKey": "signals/notification-chime.wav"
+    },
+    {
+      "id": "seed-signals-ui-click",
+      "category": "signals",
+      "label": "សំឡេងចុច UI (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1,
+      "tags": [
+        "synthetic",
+        "seed",
+        "click",
+        "ui",
+        "system"
+      ],
+      "storageKey": "signals/ui-click.wav"
+    },
+    {
+      "id": "seed-ambience-market-crowd",
+      "category": "ambience",
+      "label": "បរិយាកាសផ្សារ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "market",
+        "crowd",
+        "babble"
+      ],
+      "storageKey": "ambience/market-crowd.wav"
+    },
+    {
+      "id": "seed-ambience-office-hum",
+      "category": "ambience",
+      "label": "បរិយាកាសការិយាល័យ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "office",
+        "keyboard",
+        "hum"
+      ],
+      "storageKey": "ambience/office-hum.wav"
+    },
+    {
+      "id": "seed-ambience-city-traffic",
+      "category": "ambience",
+      "label": "បរិយាកាសទីក្រុង (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "city",
+        "traffic",
+        "street"
+      ],
+      "storageKey": "ambience/city-traffic.wav"
+    },
+    {
+      "id": "seed-synthetic-laser",
+      "category": "synthetic",
+      "label": "សំឡេងឡាស៊ែរ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.6,
+      "tags": [
+        "synthetic",
+        "seed",
+        "laser",
+        "scifi",
+        "effect"
+      ],
+      "storageKey": "synthetic/laser.wav"
+    },
+    {
+      "id": "seed-synthetic-computer-boot",
+      "category": "synthetic",
+      "label": "សំឡេងកុំព្យូទ័របើក (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "computer",
+        "boot",
+        "arpeggio"
+      ],
+      "storageKey": "synthetic/computer-boot.wav"
+    },
+    {
+      "id": "seed-synthetic-game-coin",
+      "category": "synthetic",
+      "label": "សំឡេងកាក់ហ្គេម (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 0.6,
+      "tags": [
+        "synthetic",
+        "seed",
+        "game",
+        "coin",
+        "retro"
+      ],
+      "storageKey": "synthetic/game-coin.wav"
+    }
+  ]
+}
