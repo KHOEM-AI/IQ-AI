@@ -318,3 +318,23 @@ test('cors preflight allows PATCH when configured', async () => {
     await new Promise((r) => s.close(r));
   }
 });
+
+test('audio API is integrated into the main server and uses main token', async () => {
+  const health = await fetch(`${base}/api/v1/audio/health`, {
+    headers: auth,
+  });
+  assert.equal(health.status, 200);
+  assert.equal((await health.json()).ok, true);
+
+  const denied = await fetch(`${base}/api/v1/sounds`, {
+    headers: { Authorization: 'Bearer wrong-token' },
+  });
+  assert.equal(denied.status, 401);
+
+  const list = await fetch(`${base}/api/v1/sounds`, {
+    headers: auth,
+  });
+  assert.equal(list.status, 200);
+  const body = await list.json();
+  assert.ok(Array.isArray(body.items) || Array.isArray(body.data?.items));
+});

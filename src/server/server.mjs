@@ -7,6 +7,7 @@ import { createRegistry } from '../media/registry.mjs';
 import { ok, fail } from './respond.mjs';
 import { handleMedia } from './routes/media.mjs';
 import { handleProcess } from './routes/process.mjs';
+import { createAudioHandler } from './audioHandler.mjs';
 
 function authorized(req, token) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
@@ -20,13 +21,18 @@ export function createApp(config) {
   if (!config.token) throw new Error('IQAI_TOKEN is required');
   const registry = createRegistry(createStorage(config.storageDir));
   const ctx = { config, registry };
+  const audioHandlerReady = createAudioHandler({
+    dataDir: config.audioStorageDir || './data/audio',
+    token: config.token,
+    maxBytes: config.maxUploadBytes,
+  });
 
   return http.createServer(async (req, res) => {
     try {
       if (config.corsOrigin) {
         res.setHeader('Access-Control-Allow-Origin', config.corsOrigin);
         res.setHeader('Vary', 'Origin');
-        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Filename, Range');
+        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Filename, X-Category, X-Tags, X-Source, X-License, Range');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
         if (req.method === 'OPTIONS') {
           res.writeHead(204);
@@ -46,6 +52,8 @@ export function createApp(config) {
           fail(res, 401, 'unauthorized', 'Missing or invalid token');
           return;
         }
+        const audioHandler = await audioHandlerReady;
+        if (await audioHandler(req, res)) return;
         if (await handleMedia(req, res, p, ctx)) return;
         if (await handleProcess(req, res, p)) return;
       }
