@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="km"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sound Studio</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--ac:#4f46e5}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1e1e22}}
+*{box-sizing:border-box}body{margin:0;padding:12px;font:16px system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:720px;margin-inline:auto}
+h1{font-size:1.3rem}.card{background:var(--card);border-radius:10px;padding:10px;margin:8px 0}
+input,select,button{font:inherit;padding:8px;border-radius:8px;border:1px solid #8885;background:var(--bg);color:var(--fg);width:100%;margin:3px 0}
+button{background:var(--ac);color:#fff;border:0;cursor:pointer}audio{width:100%}
+.row{display:flex;gap:6px}.row>*{flex:1}small{opacity:.7}#st{min-height:1.2em}
+</style></head><body>
+<h1>👂 Sound Studio</h1>
+<div class="card">
+ <input id="tok" type="password" placeholder="API Token">
+ <input id="file" type="file" accept="audio/*">
+ <div class="row"><input id="name" placeholder="ឈ្មោះ"><select id="cat"></select></div>
+ <input id="tags" placeholder="tags (comma)">
+ <div class="row"><input id="src" placeholder="ប្រភព"><input id="lic" placeholder="អាជ្ញាបណ្ណ"></div>
+ <button id="up">Upload</button>
+</div>
+<div id="st"></div>
+<div class="row"><input id="q" placeholder="ស្វែងរក..."><select id="fc"><option value="">ទាំងអស់</option></select></div>
+<div id="list"></div>
+<script>
+const C=['human','effects','animals','nature','vehicles','machines','cinematic','city','music','unknown'];
+const $=i=>document.getElementById(i);
+for(const c of C){$('cat').add(new Option(c,c));$('fc').add(new Option(c,c));}
+$('cat').value='unknown';
+const st=t=>$('st').textContent=t, E=encodeURIComponent;
+async function load(){
+  const r=await fetch('/api/v1/sounds?q='+E($('q').value)+'&category='+$('fc').value);
+  const d=await r.json(); $('list').replaceChildren();
+  for(const m of d.items){
+    const el=document.createElement('div');el.className='card';
+    const b=document.createElement('b');b.textContent=m.name;
+    const s=document.createElement('small');s.textContent=` ${m.category} · ${m.format} · ${(m.size/1024).toFixed(0)}KB · ${m.tags.join(', ')} · ${m.license}`;
+    const a=document.createElement('audio');a.controls=true;a.preload='none';a.src=`/api/v1/sounds/${m.id}/content`;
+    const row=document.createElement('div');row.className='row';
+    const dl=document.createElement('button');dl.textContent='Download';dl.onclick=()=>location.href=`/api/v1/sounds/${m.id}/content?download=1`;
+    const del=document.createElement('button');del.textContent='Delete';
+    del.onclick=async()=>{const r=await fetch('/api/v1/sounds/'+m.id,{method:'DELETE',headers:{authorization:'Bearer '+$('tok').value}});st(r.ok?'លុបរួច':'Error '+(await r.json()).error);load();};
+    row.append(dl,del);el.append(b,s,a,row);$('list').append(el);
+  }
+  if(!d.items.length)st('មិនមានសំឡេង');
+}
+$('up').onclick=async()=>{
+  const f=$('file').files[0]; if(!f)return st('ជ្រើសឯកសារ');
+  st('កំពុង Upload...');
+  const r=await fetch('/api/v1/sounds/upload',{method:'POST',body:f,headers:{
+    'content-type':f.type,authorization:'Bearer '+$('tok').value,
+    'x-filename':E($('name').value||f.name),'x-category':$('cat').value,'x-tags':E($('tags').value),
+    'x-source':E($('src').value),'x-license':E($('lic').value)}});
+  const d=await r.json(); st(r.ok?'Upload រួច':'Error: '+d.error); if(r.ok)load();
+};
+$('q').oninput=load;$('fc').onchange=load;load();
+</script></body></html>
