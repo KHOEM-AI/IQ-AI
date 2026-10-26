@@ -13,3 +13,6 @@ test('negated fear becomes neutral', () => assert.equal(analyzeEmotion('ខ្�
 test('មិនពេញចិត្ត stays anger', () => assert.equal(analyzeEmotion('ខ្ញុំមិនពេញចិត្តសោះ').emotion, 'anger'));
 test('longer word wins', () => assert.equal(analyzeEmotion('ខ្ញុំសប្បាយចិត្ត').emotion, 'joy'));
 test('new word ខកចិត្ត', () => assert.equal(analyzeEmotion('ខ្ញុំខកចិត្តណាស់').emotion, 'sadness'));
+
+test('word អផ្សុក', () => assert.equal(analyzeEmotion('ខ្ញុំអផ្សុកណាស់').emotion, 'sadness'));
+test('word ឆ្កួត', () => assert.equal(analyzeEmotion('អ្នកឆ្កួតហើយ').emotion, 'anger'));
