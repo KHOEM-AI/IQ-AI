@@ -42,3 +42,9 @@ Emotions: joy, sadness, anger, fear, love, surprise, neutral.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | /api/v1/images/inspect | Raw PNG/JPEG/GIF/WebP bytes (max 20 MB) -> `{format, width, height, bytes}` |
+
+## Video inspect
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | /api/v1/videos/inspect | Raw MP4/WebM bytes (max 50 MB) -> `{format, width, height, durationSec, bytes}` |
