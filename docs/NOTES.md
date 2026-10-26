@@ -29,7 +29,13 @@
 - ✅ image inspect: `POST /api/v1/images/inspect` (PNG/JPEG/GIF/WebP -> ទំហំ ទទឹង កម្ពស់)
 - ❌ emotion ពីសំឡេង/រូបភាព មិនទាន់មាន
 
+## Endpoint ទាំងអស់ដែលធ្វើរួច (2026-10-26)
+- `POST /api/v1/emotion/analyze` — JSON `{"text":"..."}` -> អារម្មណ៍
+- `POST /api/v1/audio/inspect` — ឯកសារ WAV -> ល្បឿនសំណាក ឆានែល រយៈពេល
+- `POST /api/v1/images/inspect` — PNG/JPEG/GIF/WebP -> ទទឹង កម្ពស់
+- តេស្តទាំងអស់ជាប់ (`npm test`)
+
 ## ជំហានបន្ទាប់
-1. ភ្ជាប់ emotion ទៅ `src/api/client.ts` ក្នុង KHOEM-AI
-2. ព័ត៌មានឯកសារសំឡេង (ប្រើ `inspectWav` ពី `voiceEngine.mjs` របស់ KHOEM-AI)
-3. ព័ត៌មានរូបភាព និងវីដេអូ
+1. ព័ត៌មានវីដេអូ (`POST /api/v1/videos/inspect` សម្រាប់ mp4/webm)
+2. ភ្ជាប់ UI ក្នុង KHOEM-AI ឱ្យហៅ `iqaiAnalyzeEmotion`, `iqaiInspectAudio`, `iqaiInspectImage`
+3. `images/audio/videos/process` នៅ 501 រហូតដល់មាន provider
