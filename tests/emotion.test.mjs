@@ -24,3 +24,6 @@ test('extra fear ភ័យខ្លាច', () => assert.equal(analyzeEmotion('�
 test('extra love ស្នេហា', () => assert.equal(analyzeEmotion('ស្នេហា').emotion, 'love'));
 test('extra surprise ហួសចិត្ត', () => assert.equal(analyzeEmotion('ហួសចិត្តណាស់').emotion, 'surprise'));
 test('negated extra: មិនល្អ', () => assert.equal(analyzeEmotion('មិនល្អ').emotion, 'sadness'));
+
+test('word ក្តៅក្រហាយ', () => assert.equal(analyzeEmotion('ខ្ញុំក្តៅក្រហាយ').emotion, 'anger'));
+test('emoji 💖', () => assert.equal(analyzeEmotion('💖').emotion, 'love'));
