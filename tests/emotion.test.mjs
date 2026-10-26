@@ -16,3 +16,11 @@ test('new word ខកចិត្ត', () => assert.equal(analyzeEmotion('ខ្
 
 test('word អផ្សុក', () => assert.equal(analyzeEmotion('ខ្ញុំអផ្សុកណាស់').emotion, 'sadness'));
 test('word ឆ្កួត', () => assert.equal(analyzeEmotion('អ្នកឆ្កួតហើយ').emotion, 'anger'));
+
+test('extra joy emoji', () => assert.equal(analyzeEmotion('😂😂').emotion, 'joy'));
+test('extra sadness ធ្លាក់ទឹកចិត្ត', () => assert.equal(analyzeEmotion('ខ្ញុំធ្លាក់ទឹកចិត្ត').emotion, 'sadness'));
+test('extra anger ឆាប់ខឹង', () => assert.equal(analyzeEmotion('គាត់ឆាប់ខឹង').emotion, 'anger'));
+test('extra fear ភ័យខ្លាច', () => assert.equal(analyzeEmotion('ខ្ញុំភ័យខ្លាច').emotion, 'fear'));
+test('extra love ស្នេហា', () => assert.equal(analyzeEmotion('ស្នេហា').emotion, 'love'));
+test('extra surprise ហួសចិត្ត', () => assert.equal(analyzeEmotion('ហួសចិត្តណាស់').emotion, 'surprise'));
+test('negated extra: មិនល្អ', () => assert.equal(analyzeEmotion('មិនល្អ').emotion, 'sadness'));
