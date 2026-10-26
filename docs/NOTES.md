@@ -25,6 +25,7 @@
 - ✅ emotion: `POST /api/v1/emotion/analyze` (rule-based ពីអត្ថបទខ្មែរ ពាក្យគន្លឹះ + emoji)
   ក្នុង `src/emotion/analyze.mjs` និង `src/server/routes/emotion.mjs`
 - ❌ images/audio/videos process នៅ 501 (មិនទាន់មាន provider)
+- ✅ audio inspect: `POST /api/v1/audio/inspect` (WAV -> ល្បឿនសំណាក ឆានែល រយៈពេល)
 - ❌ emotion ពីសំឡេង/រូបភាព មិនទាន់មាន
 
 ## ជំហានបន្ទាប់

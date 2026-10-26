@@ -30,3 +30,9 @@ Upload example:
 | POST | /api/v1/emotion/analyze | Body `{"text":"..."}` -> `{emotion, confidence, scores, matched}` |
 
 Emotions: joy, sadness, anger, fear, love, surprise, neutral.
+
+## Audio inspect
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | /api/v1/audio/inspect | Raw WAV bytes (max 20 MB) -> `{sampleRate, channels, bitsPerSample, durationSec, dataBytes}` |
