@@ -2,7 +2,7 @@ export const MIME = {
   'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/x-wav': 'wav',
   'audio/ogg': 'ogg', 'audio/webm': 'webm', 'audio/mp4': 'm4a', 'audio/flac': 'flac',
 };
-export const CATEGORIES = ['human', 'effects', 'animals', 'nature', 'vehicles', 'machines', 'cinematic', 'city', 'music', 'unknown'];
+export const CATEGORIES = ['human', 'effects', 'animals', 'nature', 'vehicles', 'machines', 'cinematic', 'city', 'music', 'objects', 'signals', 'ambience', 'synthetic', 'unknown'];
 
 export function sniff(b) {
   if (b.length < 12) return null;

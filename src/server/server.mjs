@@ -8,6 +8,9 @@ import { ok, fail } from "./respond.mjs";
 import { handleMedia } from "./routes/media.mjs";
 import { handleProcess } from "./routes/process.mjs";
 import { createAudioHandler } from "./audioHandler.mjs";
+import { handleEmotion } from "./routes/emotion.mjs";
+import { handleImageInspect } from "./routes/imageInspect.mjs";
+import { handleVideoInspect } from "./routes/videoInspect.mjs";
 
 function authorized(req, token) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || "");
@@ -62,6 +65,9 @@ export function createApp(config) {
         if (await audioHandler(req, res)) return;
         if (await handleMedia(req, res, p, ctx)) return;
         if (await handleProcess(req, res, p)) return;
+        if (await handleEmotion(req, res, p)) return;
+        if (await handleImageInspect(req, res, p)) return;
+        if (await handleVideoInspect(req, res, p)) return;
       }
       fail(res, 404, "not_found", "Route not found");
     } catch (e) {
