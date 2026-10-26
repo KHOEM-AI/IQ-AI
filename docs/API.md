@@ -22,3 +22,11 @@ Upload example:
 
     curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" -H "Content-Type: image/png" \
       -H "X-Filename: a.png" --data-binary @a.png http://localhost:8799/api/v1/media
+
+## Emotion (rule-based, Khmer text)
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | /api/v1/emotion/analyze | Body `{"text":"..."}` -> `{emotion, confidence, scores, matched}` |
+
+Emotions: joy, sadness, anger, fear, love, surprise, neutral.
