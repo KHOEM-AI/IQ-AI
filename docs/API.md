@@ -36,3 +36,9 @@ Emotions: joy, sadness, anger, fear, love, surprise, neutral.
 | Method | Path | Purpose |
 |---|---|---|
 | POST | /api/v1/audio/inspect | Raw WAV bytes (max 20 MB) -> `{sampleRate, channels, bitsPerSample, durationSec, dataBytes}` |
+
+## Image inspect
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | /api/v1/images/inspect | Raw PNG/JPEG/GIF/WebP bytes (max 20 MB) -> `{format, width, height, bytes}` |

@@ -26,6 +26,7 @@
   ក្នុង `src/emotion/analyze.mjs` និង `src/server/routes/emotion.mjs`
 - ❌ images/audio/videos process នៅ 501 (មិនទាន់មាន provider)
 - ✅ audio inspect: `POST /api/v1/audio/inspect` (WAV -> ល្បឿនសំណាក ឆានែល រយៈពេល)
+- ✅ image inspect: `POST /api/v1/images/inspect` (PNG/JPEG/GIF/WebP -> ទំហំ ទទឹង កម្ពស់)
 - ❌ emotion ពីសំឡេង/រូបភាព មិនទាន់មាន
 
 ## ជំហានបន្ទាប់
