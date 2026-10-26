@@ -35,6 +35,12 @@
 - `POST /api/v1/images/inspect` — PNG/JPEG/GIF/WebP -> ទទឹង កម្ពស់
 - តេស្តទាំងអស់ជាប់ (`npm test`)
 
+## Endpoint ទាំងអស់ដែលធ្វើរួច (2026-10-26)
+- `POST /api/v1/emotion/analyze` — JSON `{"text":"..."}` -> អារម្មណ៍
+- `POST /api/v1/audio/inspect` — ឯកសារ WAV -> ល្បឿនសំណាក ឆានែល រយៈពេល
+- `POST /api/v1/images/inspect` — PNG/JPEG/GIF/WebP -> ទទឹង កម្ពស់
+- តេស្តទាំងអស់ជាប់ (`npm test`)
+
 ## ជំហានបន្ទាប់
 1. ព័ត៌មានវីដេអូ (`POST /api/v1/videos/inspect` សម្រាប់ mp4/webm)
 2. ភ្ជាប់ UI ក្នុង KHOEM-AI ឱ្យហៅ `iqaiAnalyzeEmotion`, `iqaiInspectAudio`, `iqaiInspectImage`
