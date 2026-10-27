@@ -2,7 +2,7 @@
   "version": 1,
   "sampleRate": 22050,
   "note": "Synthetic approximations, not real recordings. storageKey is relative to this folder.",
-  "count": 187,
+  "count": 209,
   "items": [
     {
       "id": "seed-animals-bird-chirp",
@@ -3185,6 +3185,400 @@
         "fantasy"
       ],
       "storageKey": "synthetic/magic-sparkle.wav"
+    },
+    {
+      "id": "seed-nature-rain-drops",
+      "category": "nature",
+      "label": "សំឡេងដំណក់ទឹកភ្លៀង (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "rain",
+        "drops",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/rain-drops.wav"
+    },
+    {
+      "id": "seed-nature-rain-roof",
+      "category": "nature",
+      "label": "សំឡេងភ្លៀងលើដំបូល (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "rain",
+        "roof",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/rain-roof.wav"
+    },
+    {
+      "id": "seed-nature-river-flow",
+      "category": "nature",
+      "label": "សំឡេងទឹកស្ទឹងហូរ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "river",
+        "water",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/river-flow.wav"
+    },
+    {
+      "id": "seed-nature-mountain-wind",
+      "category": "nature",
+      "label": "សំឡេងខ្យល់តំបន់ភ្នំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "wind",
+        "mountain",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/mountain-wind.wav"
+    },
+    {
+      "id": "seed-nature-forest-day",
+      "category": "nature",
+      "label": "បរិយាកាសព្រៃពេលថ្ងៃ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "forest",
+        "day",
+        "birds",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/forest-day.wav"
+    },
+    {
+      "id": "seed-nature-forest-night",
+      "category": "nature",
+      "label": "បរិយាកាសព្រៃពេលយប់ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "forest",
+        "night",
+        "crickets",
+        "frogs",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/forest-night.wav"
+    },
+    {
+      "id": "seed-nature-jungle-deep",
+      "category": "nature",
+      "label": "បរិយាកាសព្រៃជ្រៅ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 10,
+      "tags": [
+        "synthetic",
+        "seed",
+        "jungle",
+        "forest",
+        "insects",
+        "loop",
+        "bed"
+      ],
+      "storageKey": "nature/jungle-deep.wav"
+    },
+    {
+      "id": "seed-animals-pig-oink",
+      "category": "animals",
+      "label": "សំឡេងជ្រូកយំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "pig",
+        "oink",
+        "farm"
+      ],
+      "storageKey": "animals/pig-oink.wav"
+    },
+    {
+      "id": "seed-animals-horse-neigh",
+      "category": "animals",
+      "label": "សំឡេងសេះស្រែក (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.8,
+      "tags": [
+        "synthetic",
+        "seed",
+        "horse",
+        "neigh",
+        "farm"
+      ],
+      "storageKey": "animals/horse-neigh.wav"
+    },
+    {
+      "id": "seed-animals-goat-bleat",
+      "category": "animals",
+      "label": "សំឡេងពពែយំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 1.1,
+      "tags": [
+        "synthetic",
+        "seed",
+        "goat",
+        "bleat",
+        "farm"
+      ],
+      "storageKey": "animals/goat-bleat.wav"
+    },
+    {
+      "id": "seed-animals-crow-caw",
+      "category": "animals",
+      "label": "សំឡេងក្អែកយំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "crow",
+        "caw",
+        "bird"
+      ],
+      "storageKey": "animals/crow-caw.wav"
+    },
+    {
+      "id": "seed-animals-dove-coo",
+      "category": "animals",
+      "label": "សំឡេងព្រាបយំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "dove",
+        "coo",
+        "bird"
+      ],
+      "storageKey": "animals/dove-coo.wav"
+    },
+    {
+      "id": "seed-animals-forest-insects",
+      "category": "animals",
+      "label": "សំឡេងសត្វល្អិតព្រៃ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3,
+      "tags": [
+        "synthetic",
+        "seed",
+        "insect",
+        "forest",
+        "buzz"
+      ],
+      "storageKey": "animals/forest-insects.wav"
+    },
+    {
+      "id": "seed-animals-gecko-call",
+      "category": "animals",
+      "label": "សំឡេងទុក្កែយំ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "gecko",
+        "call",
+        "night"
+      ],
+      "storageKey": "animals/gecko-call.wav"
+    },
+    {
+      "id": "seed-music-chapei",
+      "category": "music",
+      "label": "ចាប៉ី (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 3.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "instrument",
+        "khmer",
+        "traditional",
+        "string"
+      ],
+      "storageKey": "music/chapei.wav"
+    },
+    {
+      "id": "seed-music-khse-diev",
+      "category": "music",
+      "label": "ខ្សែដៀវ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.5,
+      "tags": [
+        "synthetic",
+        "seed",
+        "instrument",
+        "khmer",
+        "traditional",
+        "string"
+      ],
+      "storageKey": "music/khse-diev.wav"
+    },
+    {
+      "id": "seed-music-roneat-dek",
+      "category": "music",
+      "label": "រនាតដែក (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "instrument",
+        "khmer",
+        "traditional",
+        "percussion"
+      ],
+      "storageKey": "music/roneat-dek.wav"
+    },
+    {
+      "id": "seed-music-skor-arak",
+      "category": "music",
+      "label": "ស្គរអារាក់ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.4,
+      "tags": [
+        "synthetic",
+        "seed",
+        "instrument",
+        "khmer",
+        "traditional",
+        "drum"
+      ],
+      "storageKey": "music/skor-arak.wav"
+    },
+    {
+      "id": "seed-music-chhap",
+      "category": "music",
+      "label": "ឆាប (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.6,
+      "tags": [
+        "synthetic",
+        "seed",
+        "instrument",
+        "khmer",
+        "traditional",
+        "cymbals"
+      ],
+      "storageKey": "music/chhap.wav"
+    },
+    {
+      "id": "seed-music-krap",
+      "category": "music",
+      "label": "ក្រាប់ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2,
+      "tags": [
+        "synthetic",
+        "seed",
+        "instrument",
+        "khmer",
+        "traditional",
+        "wood"
+      ],
+      "storageKey": "music/krap.wav"
+    },
+    {
+      "id": "seed-music-beat-120bpm",
+      "category": "music",
+      "label": "ចង្វាក់អេឡិចត្រូនិក ១២០ BPM (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 8,
+      "tags": [
+        "synthetic",
+        "seed",
+        "beat",
+        "electronic",
+        "drums",
+        "120bpm",
+        "loop"
+      ],
+      "storageKey": "music/beat-120bpm.wav"
+    },
+    {
+      "id": "seed-music-bass-drop",
+      "category": "music",
+      "label": "បាសធ្លាក់ (សំយោគ)",
+      "source": "IQ-AI synthetic generator (scripts/generateSeedSounds.mjs)",
+      "license": "CC0-1.0",
+      "format": "wav",
+      "durationSec": 2.5,
+      "tags": [
+        "synthetic",
+        "seed",
+        "bass",
+        "drop",
+        "electronic",
+        "impact"
+      ],
+      "storageKey": "music/bass-drop.wav"
     }
   ]
 }
