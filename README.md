@@ -17,3 +17,8 @@ Not done yet: thumbnails, ogg/mp3/webm duration, job queue, AI image/audio/video
 (the process endpoints return 501), per-user ownership (auth is one shared token).
 
 See docs/API.md.
+
+## Audio tools
+Voice changer (`/api/v1/audio/voice`), generated sound effects (`/api/v1/audio/sfx`) and a TTS stub
+(`/api/v1/audio/tts`, 501). Voice changer needs ffmpeg. See docs/AUDIO.md.
+Other endpoints: `emotion/analyze` and `audio|images|videos/inspect` (see docs/API.md).

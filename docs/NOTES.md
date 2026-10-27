@@ -36,13 +36,6 @@
 - `POST /api/v1/videos/inspect` — MP4/WebM -> ទទឹង កម្ពស់ រយៈពេល
 - តេស្តទាំងអស់ជាប់ (`npm test`)
 
-## Endpoint ទាំងអស់ដែលធ្វើរួច (2026-10-26)
-- `POST /api/v1/emotion/analyze` — JSON `{"text":"..."}` -> អារម្មណ៍
-- `POST /api/v1/audio/inspect` — ឯកសារ WAV -> ល្បឿនសំណាក ឆានែល រយៈពេល
-- `POST /api/v1/images/inspect` — PNG/JPEG/GIF/WebP -> ទទឹង កម្ពស់
-- `POST /api/v1/videos/inspect` — MP4/WebM -> ទទឹង កម្ពស់ រយៈពេល
-- តេស្តទាំងអស់ជាប់ (`npm test`)
-
 ## ជំហានបន្ទាប់
 1. ភ្ជាប់ UI ក្នុង KHOEM-AI ឱ្យហៅ `iqaiAnalyzeEmotion`, `iqaiInspectAudio`, `iqaiInspectImage`
 2. `images/audio/videos/process` នៅ 501 រហូតដល់មាន provider
@@ -57,3 +50,11 @@
 - បន្ថែមពាក្យ និង emoji ច្រើនសម្រាប់ទាំង 6 អារម្មណ៍ តាម `EXTRA` ក្នុង `src/emotion/analyze.mjs`
 - ចង់បន្ថែមពាក្យថ្មី៖ ដាក់ក្នុង `EXTRA` រួចបន្ថែមតេស្តក្នុង `tests/emotion.test.mjs`
 - ពាក្យ "ល្អ" ទូទៅពេក អាចចេញ joy ក្នុងប្រយោគមិនទាក់ទងអារម្មណ៍
+
+## Audio៖ ប្តូរសំឡេង និងសំឡេងបែបផែន (2026-10-27)
+- `GET /api/v1/audio/voices` — បញ្ជី preset (male, female, child, robot, giant, small_animal ...)
+- `POST /api/v1/audio/voice?preset=male` — WAV/OGG/MP3 -> WAV (ត្រូវការ ffmpeg: `pkg install ffmpeg`)
+- `GET|POST /api/v1/audio/sfx` — បង្កើតសំឡេង engine horn siren beep wind rain hammer drill (មិនត្រូវការ model)
+- `POST /api/v1/audio/tts` — 501 រហូតដល់មាន provider (កែក្នុង `src/audio/tts/provider.mjs`)
+- ជាបែបផែន pitch/tempo/filter មិនមែន voice clone ពិតទេ ហើយសំឡេងសត្វជាការប៉ាន់ស្មានតាម pitch
+- CORS បន្ថែម PATCH ហើយ

@@ -10,10 +10,10 @@ import { inspectWav } from '../src/audio/inspectWav.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'sounds', 'seed');
 const catalog = JSON.parse(await fs.readFile(path.join(root, 'catalog.json'), 'utf8'));
 
-test('seed catalog covers all 10 categories, 3 sounds each', () => {
+test('seed catalog covers all 10 categories, at least 3 sounds each', () => {
   assert.equal(catalog.count, catalog.items.length);
   for (const slug of categorySlugs()) {
-    assert.equal(catalog.items.filter((i) => i.category === slug).length, 3, slug);
+    assert.ok(catalog.items.filter((i) => i.category === slug).length >= 3, slug);
   }
 });
 

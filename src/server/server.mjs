@@ -11,6 +11,7 @@ import { createAudioHandler } from "./audioHandler.mjs";
 import { handleEmotion } from "./routes/emotion.mjs";
 import { handleImageInspect } from "./routes/imageInspect.mjs";
 import { handleVideoInspect } from "./routes/videoInspect.mjs";
+import { handleAudioVoice } from "./routes/audioVoice.mjs";
 
 function authorized(req, token) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || "");
@@ -61,6 +62,7 @@ export function createApp(config) {
           fail(res, 401, "unauthorized", "Missing or invalid token");
           return;
         }
+        if (await handleAudioVoice(req, res, p)) return;
         const audioHandler = await audioHandlerReady;
         if (await audioHandler(req, res)) return;
         if (await handleMedia(req, res, p, ctx)) return;

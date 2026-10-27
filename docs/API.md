@@ -38,3 +38,25 @@ Upload example:
 
     curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" -H "Content-Type: image/png" \
       -H "X-Filename: a.png" --data-binary @a.png http://localhost:8799/api/v1/media
+
+## Audio voice / sfx / tts
+Full details in docs/AUDIO.md.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /api/v1/audio/voices | Voice presets and limits |
+| POST | /api/v1/audio/voice?preset=&pitch=&speed=&volume= | Raw WAV/OGG/MP3 -> WAV |
+| GET | /api/v1/audio/sfx | Sound-effect types |
+| POST | /api/v1/audio/sfx | `{"type","durationSec"}` -> WAV |
+| POST | /api/v1/audio/tts | 501 until a provider is connected |
+
+## Sound library: edit, categories, favorites
+
+| Method | Path | Purpose |
+|---|---|---|
+| PATCH | /api/v1/sounds/:id | JSON body with any of `name`, `category`, `tags`, `source`, `license`, `favorite`. Needs token. Returns the updated record |
+| GET | /api/v1/sounds/categories | `{"items":[...]}` categories accepted by upload and PATCH |
+| GET | /api/v1/sounds?favorite=true | Only favorites (combine with `q`, `category`, `tag`, `limit`) |
+
+Errors: 400 `invalid_field` (with `message`), 400 `bad_json`, 404 `not_found`, 413 `too_large` (body over 64 KB).
+`id`, `mime`, `size`, `format` and `createdAt` can not be changed.

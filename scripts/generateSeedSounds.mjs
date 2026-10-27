@@ -5,13 +5,21 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rng, fade, normalize, toWav, SR } from '../src/sound/synth.mjs';
 import { SEED_SOUNDS } from '../src/sound/seedSounds.mjs';
+import { EXTRA_SOUNDS } from '../src/sound/seedSoundsExtra.mjs';
 import { validateSound } from '../src/sound/schema.mjs';
 
+const seen = new Set();
+const ALL_SOUNDS = [...SEED_SOUNDS, ...EXTRA_SOUNDS].filter((x) => {
+  const k = `${x.cat}/${x.name}`;
+  if (seen.has(k)) { console.warn('SKIP duplicate', k); return false; }
+  seen.add(k);
+  return true;
+});
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'sounds', 'seed');
-await fs.rm(root, { recursive: true, force: true });
 
 const items = [];
-for (const s of SEED_SOUNDS) {
+for (const s of ALL_SOUNDS) {
   const samples = normalize(fade(s.gen(rng(s.seed))));
   const key = `${s.cat}/${s.name}.wav`;
   await fs.mkdir(path.join(root, s.cat), { recursive: true });

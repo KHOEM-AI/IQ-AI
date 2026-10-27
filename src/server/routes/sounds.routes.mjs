@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
-import { MIME, sniff } from '../../audio/validation.mjs';
-import { buildMeta } from '../../audio/metadata.mjs';
+import { MIME, sniff, CATEGORIES } from '../../audio/validation.mjs';
+import { buildMeta, applyPatch } from '../../audio/metadata.mjs';
 import { searchLibrary } from '../../audio/library.mjs';
 import { ID_RE } from '../../audio/storage.mjs';
 
@@ -11,6 +11,17 @@ export const json = (res, status, obj) => {
   res.writeHead(status, { 'content-type': 'application/json', 'x-content-type-options': 'nosniff' });
   res.end(JSON.stringify(obj));
 };
+
+async function readJsonBody(req, limit = 64 * 1024) {
+  let size = 0;
+  const chunks = [];
+  for await (const ch of req) {
+    size += ch.length;
+    if (size > limit) throw Object.assign(new Error('too_large'), { code: 'TOO_LARGE' });
+    chunks.push(ch);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+}
 
 export function soundsRoutes({ storage, token, maxBytes }) {
   const needAuth = (req, res) => {
@@ -88,6 +99,7 @@ export function soundsRoutes({ storage, token, maxBytes }) {
       return json(res, 200, searchLibrary(await storage.listMeta(), q));
     }
     if (p === '/api/v1/sounds/upload' && req.method === 'POST') return upload(req, res);
+    if (p === '/api/v1/sounds/categories' && req.method === 'GET') return json(res, 200, { items: [...CATEGORIES] });
     const m = /^\/api\/v1\/sounds\/([^/]+)(\/content)?$/.exec(p);
     if (!m) return json(res, 404, { error: 'not_found' });
     const id = m[1];
@@ -96,6 +108,22 @@ export function soundsRoutes({ storage, token, maxBytes }) {
     if (!m[2] && req.method === 'GET') {
       const meta = await storage.getMeta(id);
       return meta ? json(res, 200, meta) : json(res, 404, { error: 'not_found' });
+    }
+    if (!m[2] && req.method === 'PATCH') {
+      if (!needAuth(req, res)) return;
+      const meta = await storage.getMeta(id);
+      if (!meta) return json(res, 404, { error: 'not_found' });
+      let body;
+      try { body = await readJsonBody(req); }
+      catch (err) {
+        if (err.code === 'TOO_LARGE') { res.setHeader('connection', 'close'); return json(res, 413, { error: 'too_large' }); }
+        return json(res, 400, { error: 'bad_json' });
+      }
+      const r = applyPatch(body);
+      if (!r.ok) return json(res, 400, { error: 'invalid_field', message: r.message });
+      const next = { ...meta, ...r.value, id: meta.id, updatedAt: new Date().toISOString() };
+      await storage.saveMeta(next);
+      return json(res, 200, next);
     }
     if (!m[2] && req.method === 'DELETE') {
       if (!needAuth(req, res)) return;
