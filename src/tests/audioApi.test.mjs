@@ -85,3 +85,84 @@ test('storage cleanup after invalid upload and delete', async () => {
   await assert.rejects(fs.access(metaPath));
   assert.deepEqual(await fs.readdir(tmpDir), []);
 });
+
+test('audio storage survives handler restart', async () => {
+  const recoveryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'audio-recovery-'));
+  let server;
+
+  const startServer = async () => {
+    const handler = await createAudioHandler({
+      dataDir: recoveryDir,
+      token: 't0k',
+      maxBytes: 1000,
+    });
+
+    const instance = http.createServer(async (req, res) => {
+      if (!(await handler(req, res))) {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+
+    await new Promise((resolve) => instance.listen(0, resolve));
+
+    return {
+      instance,
+      base: `http://127.0.0.1:${instance.address().port}`,
+    };
+  };
+
+  const stopServer = async () => {
+    if (!server) return;
+    const current = server;
+    server = null;
+    await new Promise((resolve, reject) => {
+      current.close((err) => err ? reject(err) : resolve());
+    });
+  };
+
+  try {
+    server = (await startServer()).instance;
+    const base1 = `http://127.0.0.1:${server.address().port}`;
+    const body = wav();
+
+    const uploaded = await fetch(`${base1}/api/v1/sounds/upload`, {
+      method: 'POST',
+      body,
+      headers: {
+        'content-type': 'audio/wav',
+        ...auth,
+      },
+    });
+
+    assert.equal(uploaded.status, 201);
+    const meta = await uploaded.json();
+
+    await stopServer();
+
+    server = (await startServer()).instance;
+    const base2 = `http://127.0.0.1:${server.address().port}`;
+
+    const metadataResponse = await fetch(
+      `${base2}/api/v1/sounds/${meta.id}`
+    );
+
+    assert.equal(metadataResponse.status, 200);
+    const restoredMeta = await metadataResponse.json();
+    assert.equal(restoredMeta.id, meta.id);
+    assert.equal(restoredMeta.size, body.length);
+
+    const contentResponse = await fetch(
+      `${base2}/api/v1/sounds/${meta.id}/content`
+    );
+
+    assert.equal(contentResponse.status, 200);
+    assert.deepEqual(
+      Buffer.from(await contentResponse.arrayBuffer()),
+      body
+    );
+  } finally {
+    await stopServer();
+    await fs.rm(recoveryDir, { recursive: true, force: true });
+  }
+});
