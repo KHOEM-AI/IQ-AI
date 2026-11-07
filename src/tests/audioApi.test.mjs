@@ -50,3 +50,38 @@ test('rejects fake, wrong type, too large, bad id', async () => {
   assert.equal((await up(Buffer.alloc(2000, 1))).status, 413);
   assert.equal((await fetch(base + '/api/v1/sounds/..%2F..%2Fetc')).status, 400);
 });
+
+test('storage cleanup after invalid upload and delete', async () => {
+  const tmpDir = path.join(dir, 'tmp');
+  const filesDir = path.join(dir, 'files');
+  const metaDir = path.join(dir, 'meta');
+
+  const bad = await up(Buffer.from('not a valid audio file'));
+  assert.equal(bad.status, 422);
+  assert.deepEqual(await fs.readdir(tmpDir), []);
+
+  const body = wav();
+  const uploaded = await up(body);
+  assert.equal(uploaded.status, 201);
+
+  const meta = await uploaded.json();
+  const filePath = path.join(filesDir, meta.id);
+  const metaPath = path.join(metaDir, `${meta.id}.json`);
+
+  assert.deepEqual(await fs.readFile(filePath), body);
+
+  const savedMeta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
+  assert.equal(savedMeta.id, meta.id);
+  assert.equal(savedMeta.size, body.length);
+  assert.deepEqual(await fs.readdir(tmpDir), []);
+
+  const deleted = await fetch(`${base}/api/v1/sounds/${meta.id}`, {
+    method: 'DELETE',
+    headers: auth,
+  });
+
+  assert.equal(deleted.status, 200);
+  await assert.rejects(fs.access(filePath));
+  await assert.rejects(fs.access(metaPath));
+  assert.deepEqual(await fs.readdir(tmpDir), []);
+});
