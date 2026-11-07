@@ -12,6 +12,7 @@ import { handleEmotion } from "./routes/emotion.mjs";
 import { handleImageInspect } from "./routes/imageInspect.mjs";
 import { handleVideoInspect } from "./routes/videoInspect.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
+import { handleAudioInspect } from "./routes/audioInspect.mjs";
 
 function authorized(req, token) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || "");
@@ -63,6 +64,7 @@ export function createApp(config) {
           return;
         }
         if (await handleAudioVoice(req, res, p)) return;
+        if (await handleAudioInspect(req, res, p)) return;
         const audioHandler = await audioHandlerReady;
         if (await audioHandler(req, res)) return;
         if (await handleMedia(req, res, p, ctx)) return;

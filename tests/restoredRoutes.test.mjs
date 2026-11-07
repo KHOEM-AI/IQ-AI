@@ -37,3 +37,15 @@ test('image and video inspect are mounted (400 for garbage, not 404)', async () 
     assert.equal(r.status, 400, p);
   }
 });
+
+
+test('audio inspect is mounted on the main server', async () => {
+  const r = await fetch(`${base}/api/v1/audio/inspect`, {
+    method: 'POST',
+    headers: auth,
+    body: Buffer.alloc(64, 1),
+  });
+  assert.equal(r.status, 400);
+  const j = await r.json();
+  assert.equal(j.error.code, 'bad_audio');
+});
