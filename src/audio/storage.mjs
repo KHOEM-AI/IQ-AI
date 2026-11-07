@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 export const ID_RE = /^[0-9a-f-]{36}$/;
 
@@ -96,11 +97,18 @@ export function createStorage(dir) {
     discard: (id) =>
       fs.rm(path.join(tmp, id), { force: true }),
 
-    saveMeta: (m) =>
-      fs.writeFile(
-        path.join(meta, m.id + '.json'),
-        JSON.stringify(m)
-      ),
+    async saveMeta(m) {
+      const target = path.join(meta, m.id + '.json');
+      const temp = path.join(tmp, `${m.id}.meta-${randomUUID()}`);
+
+      try {
+        await fs.writeFile(temp, JSON.stringify(m), { flag: 'wx' });
+        await fs.rename(temp, target);
+      } catch (err) {
+        await fs.rm(temp, { force: true }).catch(() => {});
+        throw err;
+      }
+    },
 
     async getMeta(id) {
       try {

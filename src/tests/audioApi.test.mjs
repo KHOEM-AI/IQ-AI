@@ -289,3 +289,38 @@ test('audio storage recovery removes orphan and temporary files', async () => {
     await fs.rm(recoveryDir, { recursive: true, force: true });
   }
 });
+
+test('audio metadata writes replace existing metadata without leaving temp files', async () => {
+  const metadataDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'audio-atomic-meta-')
+  );
+
+  try {
+    const storage = createStorage(metadataDir);
+    await storage.init();
+
+    const id = '55555555-5555-4555-8555-555555555555';
+
+    await fs.writeFile(storage.filePath(id), 'audio-data');
+
+    await storage.saveMeta({ id, name: 'before' });
+    await storage.saveMeta({ id, name: 'after' });
+
+    assert.deepEqual(await storage.getMeta(id), {
+      id,
+      name: 'after',
+    });
+
+    assert.deepEqual(
+      await fs.readdir(path.join(metadataDir, 'meta')),
+      [`${id}.json`]
+    );
+
+    assert.deepEqual(
+      await fs.readdir(path.join(metadataDir, 'tmp')),
+      []
+    );
+  } finally {
+    await fs.rm(metadataDir, { recursive: true, force: true });
+  }
+});
