@@ -49,3 +49,40 @@ test('audio inspect is mounted on the main server', async () => {
   const j = await r.json();
   assert.equal(j.error.code, 'bad_audio');
 });
+
+test('audio upload uses configured storage directory', async () => {
+  const audioDir = path.join(dir, 'audio');
+  const wav = Buffer.concat([
+    Buffer.from('RIFF'),
+    Buffer.alloc(4),
+    Buffer.from('WAVE'),
+    Buffer.alloc(64, 1),
+  ]);
+
+  const r = await fetch(`${base}/api/v1/sounds/upload`, {
+    method: 'POST',
+    headers: {
+      ...auth,
+      'Content-Type': 'audio/wav',
+      'x-filename': 'storage-test',
+    },
+    body: wav,
+  });
+
+  assert.equal(r.status, 201);
+
+  const meta = await r.json();
+
+  const storedFile = path.join(audioDir, 'files', meta.id);
+  const storedMeta = path.join(audioDir, 'meta', `${meta.id}.json`);
+
+  const fileContent = await fs.readFile(storedFile);
+  const savedMeta = JSON.parse(await fs.readFile(storedMeta, 'utf8'));
+
+  assert.deepEqual(fileContent, wav);
+  assert.equal(savedMeta.id, meta.id);
+  assert.equal(savedMeta.size, wav.length);
+
+  const tmpFiles = await fs.readdir(path.join(audioDir, 'tmp'));
+  assert.deepEqual(tmpFiles, []);
+});
