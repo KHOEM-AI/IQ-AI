@@ -65,7 +65,17 @@ export function soundsRoutes({ storage, token, maxBytes }) {
     }
     await storage.commit(id);
     const meta = buildMeta({ id, headers: req.headers, mime: ct, size, kind });
-    await storage.saveMeta(meta);
+
+    try {
+      await storage.saveMeta(meta);
+    } catch {
+      try {
+        await storage.remove(id);
+      } catch {}
+
+      return json(res, 500, { error: 'internal_error' });
+    }
+
     json(res, 201, meta);
   }
 

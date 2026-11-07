@@ -1,3 +1,5 @@
+import { soundsRoutes } from '../server/routes/sounds.routes.mjs';
+import { createStorage } from '../audio/storage.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -164,5 +166,64 @@ test('audio storage survives handler restart', async () => {
   } finally {
     await stopServer();
     await fs.rm(recoveryDir, { recursive: true, force: true });
+  }
+});
+
+
+test('metadata failure rolls back committed audio file', async () => {
+  const failureDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'audio-meta-failure-')
+  );
+
+  let server;
+
+  try {
+    const storage = createStorage(failureDir);
+    await storage.init();
+
+    storage.saveMeta = async () => {
+      throw new Error('simulated metadata write failure');
+    };
+
+    const routes = soundsRoutes({
+      storage,
+      token: 't0k',
+      maxBytes: 1000,
+    });
+
+    server = http.createServer(async (req, res) => {
+      try {
+        await routes(req, res, new URL(req.url, 'http://localhost'));
+      } catch {
+        if (!res.headersSent) {
+          res.writeHead(500);
+          res.end();
+        }
+      }
+    });
+
+    await new Promise((resolve) => server.listen(0, resolve));
+
+    const base = `http://127.0.0.1:${server.address().port}`;
+
+    const response = await fetch(`${base}/api/v1/sounds/upload`, {
+      method: 'POST',
+      body: wav(),
+      headers: {
+        'content-type': 'audio/wav',
+        ...auth,
+      },
+    });
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(await fs.readdir(path.join(failureDir, 'files')), []);
+    assert.deepEqual(await fs.readdir(path.join(failureDir, 'meta')), []);
+    assert.deepEqual(await fs.readdir(path.join(failureDir, 'tmp')), []);
+  } finally {
+    if (server) {
+      await new Promise((resolve) => server.close(resolve));
+    }
+
+    await fs.rm(failureDir, { recursive: true, force: true });
   }
 });
