@@ -227,3 +227,65 @@ test('metadata failure rolls back committed audio file', async () => {
     await fs.rm(failureDir, { recursive: true, force: true });
   }
 });
+
+test('audio storage recovery removes orphan and temporary files', async () => {
+  const recoveryDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'audio-storage-recovery-')
+  );
+
+  try {
+    const storage = createStorage(recoveryDir);
+    await storage.init();
+
+    const validId = '11111111-1111-4111-8111-111111111111';
+    const orphanId = '22222222-2222-4222-8222-222222222222';
+    const missingId = '33333333-3333-4333-8333-333333333333';
+    const corruptId = '44444444-4444-4444-8444-444444444444';
+
+    await fs.writeFile(storage.filePath(validId), 'valid-audio');
+    await storage.saveMeta({ id: validId, name: 'valid' });
+    await fs.writeFile(storage.filePath(orphanId), 'orphan-audio');
+
+    await fs.writeFile(
+      path.join(recoveryDir, 'meta', `${missingId}.json`),
+      JSON.stringify({ id: missingId })
+    );
+
+    await fs.writeFile(storage.filePath(corruptId), 'corrupt-audio');
+    await fs.writeFile(
+      path.join(recoveryDir, 'meta', `${corruptId}.json`),
+      '{invalid-json'
+    );
+
+    await fs.writeFile(storage.tmpPath(validId), 'unfinished-upload');
+    await fs.writeFile(
+      path.join(recoveryDir, 'files', 'keep.txt'),
+      'unknown-file'
+    );
+
+    const result = await storage.recover();
+
+    assert.equal(result.valid, 1);
+    assert.equal(result.removedFiles, 2);
+    assert.equal(result.removedTempFiles, 1);
+
+    assert.deepEqual(
+      (await fs.readdir(path.join(recoveryDir, 'files'))).sort(),
+      ['keep.txt', validId].sort()
+    );
+
+    assert.deepEqual(
+      await fs.readdir(path.join(recoveryDir, 'meta')),
+      [`${validId}.json`]
+    );
+
+    assert.deepEqual(
+      await fs.readdir(path.join(recoveryDir, 'tmp')),
+      []
+    );
+
+    assert.equal((await storage.getMeta(validId)).id, validId);
+  } finally {
+    await fs.rm(recoveryDir, { recursive: true, force: true });
+  }
+});

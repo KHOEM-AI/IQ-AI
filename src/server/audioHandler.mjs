@@ -10,6 +10,7 @@ export async function createAudioHandler({
 } = {}) {
   const storage = createStorage(dataDir);
   await storage.init();
+  await storage.recover();
   const sounds = soundsRoutes({ storage, token, maxBytes });
   const audio = audioRoutes();
   return async function audioHandler(req, res) {
