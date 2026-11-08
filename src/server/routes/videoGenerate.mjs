@@ -46,11 +46,6 @@ export async function handleVideoGenerate(req, res, p) {
         height: q.has('height') ? q.get('height') : undefined,
         sfxType: q.get('sfx') || null,
       });
-      if (!r.ok && r.message === 'ffmpeg_failed') {
-        console.error('photo video error:', r.detail);
-        fail(res, 422, 'video_processing_failed', 'Could not create a video from this photo');
-        return true;
-      }
       if (!r.ok) { fail(res, 400, 'bad_params', r.message); return true; }
       sendMp4(res, r.buf, { 'X-Applied': JSON.stringify(r.applied) });
     } catch (e) {
@@ -70,13 +65,13 @@ export async function handleVideoGenerate(req, res, p) {
       fail(res, 400, 'bad_request', 'Body must be JSON: {"text":"..."}'); return true;
     }
     try {
-      const r = await renderTextVideo(body || {});
-      if (!r.ok && r.message === 'ffmpeg_failed') {
-        console.error('text video error:', r.detail);
-        fail(res, 422, 'video_processing_failed', 'Could not create this video');
-        return true;
-      }
-      if (!r.ok) { fail(res, r.status || 400, r.status ? 'font_missing' : 'bad_params', r.message); return true; }
+      const b = body || {};
+      const r = await renderTextVideo({
+        text: b.text, durationSec: b.durationSec, width: b.width, height: b.height,
+        fontSize: b.fontSize, bgColor: b.bgColor, textColor: b.textColor,
+        sfxType: b.sfx ?? null,
+      });
+      if (!r.ok) { fail(res, 400, 'bad_params', r.message); return true; }
       sendMp4(res, r.buf, { 'X-Applied': JSON.stringify(r.applied) });
     } catch (e) {
       console.error('text video error:', e && (e.detail || e.message));

@@ -16,31 +16,16 @@ function clampNum(v, def, [lo, hi]) {
 }
 const evenSize = (n) => Math.max(2, Math.round(n / 2) * 2);
 
-// Split text into display clusters: a base character plus its combining marks,
-// and the Khmer coeng (U+17D2) plus the consonant it subscripts. A line break
-// must never fall inside one cluster, or the Khmer text renders corrupted.
-const COMBINING = /^[\p{M}\u200C\u200D]$/u;
-function clusters(s) {
-  const out = [];
-  let prev = '';
-  for (const c of Array.from(s)) {
-    if (out.length && (COMBINING.test(c) || prev === '\u17D2')) out[out.length - 1] += c;
-    else out.push(c);
-    prev = c;
-  }
-  return out;
-}
-
 // Word-wrap that also hard-splits a single "word" longer than the line width
 // (Khmer text often has no spaces, so whole sentences can arrive as one token).
 function wrapText(text, maxCharsPerLine, maxLines) {
-  const chars = (s) => clusters(s).length;
+  const chars = (s) => Array.from(s).length;
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines = [];
   let cur = '';
   const pushHardSplit = (word) => {
     let chunk = '';
-    for (const c of clusters(word)) {
+    for (const c of Array.from(word)) {
       if (chars(chunk) >= maxCharsPerLine) { lines.push(chunk); chunk = ''; }
       chunk += c;
     }
@@ -73,9 +58,6 @@ export async function renderTextVideo({
   if (!HEX_COLOR.test(bgColor) || !HEX_COLOR.test(textColor)) return { ok: false, message: 'bgColor/textColor must be #RRGGBB' };
   if (sfxType !== null && !SFX_TYPES.includes(sfxType)) return { ok: false, message: `sfx must be one of: ${SFX_TYPES.join(', ')}` };
 
-  try { await fs.access(KHMER_FONT); }
-  catch { return { ok: false, status: 503, message: `Khmer font not found: ${KHMER_FONT}` }; }
-
   const w = evenSize(w0.value);
   const h = evenSize(h0.value);
   const fontSizePx = Math.round(fs0.value);
@@ -96,7 +78,7 @@ export async function renderTextVideo({
     await fs.writeFile(txtPath, lines.join('\n'), 'utf8');
     const silentMp4 = path.join(dir, 'silent.mp4');
     const lineSpacing = Math.round(fontSizePx * 0.3);
-    const vf = `drawtext=fontfile=${KHMER_FONT}:textfile=${txtPath}:expansion=none:fontcolor=${textColor}:fontsize=${fontSizePx}:line_spacing=${lineSpacing}:x=(w-text_w)/2:y=(h-text_h)/2`;
+    const vf = `drawtext=fontfile=${KHMER_FONT}:textfile=${txtPath}:fontcolor=${textColor}:fontsize=${fontSizePx}:line_spacing=${lineSpacing}:x=(w-text_w)/2:y=(h-text_h)/2`;
     await runFfmpegArgs([
       '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', `color=c=${bgColor}:s=${w}x${h}:d=${dur.value}`,
       '-vf', vf, '-r', String(fps), '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-f', 'mp4', silentMp4,

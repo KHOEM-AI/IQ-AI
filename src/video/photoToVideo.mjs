@@ -42,11 +42,6 @@ export async function renderPhotoVideo({ imageBuf, effect = 'zoom-in', durationS
   try {
     const inImg = path.join(dir, 'in.img');
     await fs.writeFile(inImg, imageBuf);
-    try {
-      await runFfmpegArgs(['-nostdin', '-v', 'error', '-i', inImg, '-frames:v', '1', '-f', 'null', '-'], { timeoutMs: 15000 });
-    } catch {
-      return { ok: false, message: 'image could not be decoded' };
-    }
     const silentMp4 = path.join(dir, 'silent.mp4');
     const vf = `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},${zoompanFilter(effect, dur.value, fps, w, h)},format=yuv420p`;
     await runFfmpegArgs([
