@@ -44,7 +44,10 @@ function firstFrameHasInk(buf) {
 }
 
 test('text video draws a literal % (drawtext must not expand it)', { skip: skipFont, timeout: 60000 }, async () => {
-  for (const text of ['sale 50% off', 'frame %{pts} here', 'plain']) {
+  // The Android Khmer font has no Latin letters, so every sample contains a short Khmer word
+  // (the text must still draw ink); a lone % before or after it must not blank the text.
+  const SHORT = KHMER.slice(0, 5);
+  for (const text of [SHORT + ' 50%', '50% ' + SHORT, SHORT + ' 100% 50%']) {
     const r = await renderTextVideo({ text, durationSec: 1, width: 480, height: 320, textColor: '#ffffff' });
     assert.equal(r.ok, true, text);
     assert.equal(firstFrameHasInk(r.buf), true, `text was drawn: ${text}`);
