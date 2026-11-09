@@ -19,6 +19,9 @@ export const nativeAvailable =
   typeof nativeModule?.analyzePcm16 === 'function';
 
 export function analyzePcm16(buffer) {
+  if (arguments.length !== 1) {
+    throw new TypeError("Expected one PCM16 Buffer");
+  }
   if (!Buffer.isBuffer(buffer)) {
     throw new TypeError('Input must be a Node.js Buffer');
   }

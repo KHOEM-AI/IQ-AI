@@ -13,8 +13,8 @@ napi_value throw_type_error(napi_env env, const char* message) {
 }
 
 napi_value analyze_pcm16(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value argv[1];
+  size_t argc = 2;
+  napi_value argv[2];
 
   napi_status status =
       napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);

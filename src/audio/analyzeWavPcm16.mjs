@@ -41,6 +41,9 @@ function parsePcm16Data(buf) {
     }
 
     if (id === 'fmt ') {
+      if (fmt !== null) {
+        return { ok: false, reason: 'invalid_fmt_chunk' };
+      }
       if (size < 16) {
         return { ok: false, reason: 'invalid_fmt_chunk' };
       }
@@ -60,6 +63,10 @@ function parsePcm16Data(buf) {
     pos = paddedEnd;
   }
 
+  if (pos !== riffEnd) {
+    return { ok: false, reason: 'invalid_chunk_header' };
+  }
+
   if (!fmt) return { ok: false, reason: 'no_fmt_chunk' };
   if (!data) return { ok: false, reason: 'no_data_chunk' };
 
@@ -70,7 +77,8 @@ function parsePcm16Data(buf) {
   if (
     fmt.channels < 1 ||
     fmt.sampleRate < 1 ||
-    fmt.blockAlign !== fmt.channels * 2
+    fmt.blockAlign !== fmt.channels * 2 ||
+    fmt.byteRate !== fmt.sampleRate * fmt.blockAlign
   ) {
     return { ok: false, reason: 'invalid_pcm_format' };
   }
@@ -107,7 +115,7 @@ function analyzePcm16JavaScript(buffer) {
   };
 }
 
-export function analyzeWavPcm16(buf) {
+export function analyzeWavPcm16(buf, options = {}) {
   const parsed = parsePcm16Data(buf);
 
   if (!parsed.ok) {
@@ -117,13 +125,24 @@ export function analyzeWavPcm16(buf) {
     };
   }
 
-  const metrics = nativeAvailable
-    ? analyzePcm16(parsed.data)
-    : analyzePcm16JavaScript(parsed.data);
+  const nativeAnalyzer =
+    options?.nativeAnalyzer ?? (nativeAvailable ? analyzePcm16 : null);
+
+  if (typeof nativeAnalyzer === "function") {
+    try {
+      return {
+        available: true,
+        engine: "cpp",
+        ...nativeAnalyzer(parsed.data),
+      };
+    } catch {
+      // Recover safely with the JavaScript implementation.
+    }
+  }
 
   return {
     available: true,
-    engine: nativeAvailable ? 'cpp' : 'javascript',
-    ...metrics,
+    engine: "javascript",
+    ...analyzePcm16JavaScript(parsed.data),
   };
 }

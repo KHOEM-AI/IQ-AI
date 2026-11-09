@@ -60,6 +60,21 @@ test('analyzes mono PCM16 WAV', () => {
   assert.ok(result.rms > 0 && result.rms <= 1);
 });
 
+test("falls back to JavaScript when native analysis throws", () => {
+  const wav = makeWav([-32768, 32767, 0, 16384]);
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("simulated_native_runtime_failure");
+    },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.engine, "javascript");
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms > 0 && result.rms <= 1);
+});
+
 test('analyzes interleaved stereo PCM16 samples', () => {
   const wav = makeWav([-32768, 32767, 0, 0], { channels: 2 });
   const result = analyzeWavPcm16(wav);
@@ -67,6 +82,31 @@ test('analyzes interleaved stereo PCM16 samples', () => {
   assert.equal(result.available, true);
   assert.equal(result.sampleCount, 4);
   assert.equal(result.peak, 1);
+});
+
+test("C++ and JavaScript produce matching PCM16 metrics", () => {
+  const samples = [-32768, 32767, 0, 16384, -16384, 8192, -8192, 1];
+  const wav = makeWav(samples);
+  assert.equal(nativeAvailable, true, "native C++ module must be built for this comparison");
+  const cpp = analyzeWavPcm16(wav);
+
+  const fallback = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("force_javascript_fallback");
+    },
+  });
+
+  assert.equal(cpp.available, true);
+  assert.equal(fallback.available, true);
+  assert.equal(fallback.engine, "javascript");
+  assert.equal(cpp.sampleCount, fallback.sampleCount);
+
+  for (const key of ["peak", "rms", "peakDbfs", "rmsDbfs"]) {
+    assert.ok(
+      Math.abs(cpp[key] - fallback[key]) < 1e-12,
+      key + " differs: " + cpp[key] + " vs " + fallback[key],
+    );
+  }
 });
 
 test('does not analyze non-PCM16 WAV', () => {
@@ -87,6 +127,42 @@ test('rejects malformed WAV chunk size safely', () => {
 
   assert.equal(result.available, false);
   assert.equal(result.reason, 'invalid_chunk_size');
+});
+
+test("rejects inconsistent WAV byteRate", () => {
+  const wav = makeWav([100, 200]);
+  wav.writeUInt32LE(1, 28);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_format");
+});
+
+test("rejects duplicate WAV fmt chunks", () => {
+  const original = makeWav([100, 200]);
+  const wav = Buffer.concat([
+    original.subarray(0, 36),
+    original.subarray(12, 36),
+    original.subarray(36),
+  ]);
+  wav.writeUInt32LE(wav.length - 8, 4);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_fmt_chunk");
+});
+
+test("rejects incomplete trailing WAV chunk header", () => {
+  const original = makeWav([100, 200]);
+  const wav = Buffer.concat([original, Buffer.from([1, 2, 3, 4])]);
+  wav.writeUInt32LE(wav.length - 8, 4);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_chunk_header");
 });
 
 test('production audio route returns legacy data and native analysis', async (t) => {
