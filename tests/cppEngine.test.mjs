@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import {
   analyzePcm16,
   analyzePcm24,
+  analyzeFloat32,
   nativeAvailable,
   nativePcm24Available,
+  nativeFloat32Available,
 } from '../src/native/cppEngine.mjs';
 
 test('C++ Native Module is available after build', {
@@ -190,4 +192,87 @@ test("rejects extra PCM24 arguments", {
     () => analyzePcm24(Buffer.alloc(3), "extra"),
     TypeError,
   );
+});
+
+
+test("C++ Native Float32 Module is available after build", {
+  skip: !nativeFloat32Available,
+}, () => {
+  assert.equal(nativeFloat32Available, true);
+});
+
+test("analyzes Float32 peak, RMS and sample count", {
+  skip: !nativeFloat32Available,
+}, () => {
+  const pcm = Buffer.alloc(20);
+  [-1, -0.5, 0, 0.5, 1].forEach((sample, index) => {
+    pcm.writeFloatLE(sample, index * 4);
+  });
+  const result = analyzeFloat32(pcm);
+
+  assert.equal(result.sampleCount, 5);
+  assert.equal(result.peak, 1);
+  assert.ok(Math.abs(result.rms - Math.sqrt(0.5)) < 1e-12);
+  assert.equal(result.peakDbfs, 0);
+});
+
+test("handles Float32 silence correctly", {
+  skip: !nativeFloat32Available,
+}, () => {
+  const result = analyzeFloat32(Buffer.alloc(4096));
+  assert.equal(result.sampleCount, 1024);
+  assert.equal(result.peak, 0);
+  assert.equal(result.rms, 0);
+  assert.equal(result.peakDbfs, -160);
+  assert.equal(result.rmsDbfs, -160);
+});
+
+test("preserves finite Float32 samples above full scale", {
+  skip: !nativeFloat32Available,
+}, () => {
+  const pcm = Buffer.alloc(8);
+  pcm.writeFloatLE(2, 0);
+  pcm.writeFloatLE(-0.5, 4);
+  const result = analyzeFloat32(pcm);
+
+  assert.equal(result.sampleCount, 2);
+  assert.equal(result.peak, 2);
+  assert.ok(result.peakDbfs > 6);
+});
+
+test("rejects incomplete Float32 samples", {
+  skip: !nativeFloat32Available,
+}, () => {
+  assert.throws(() => analyzeFloat32(Buffer.from([1, 2, 3])), TypeError);
+});
+
+test("rejects empty Float32 input", {
+  skip: !nativeFloat32Available,
+}, () => {
+  assert.throws(() => analyzeFloat32(Buffer.alloc(0)), TypeError);
+});
+
+test("rejects non-Buffer Float32 input", {
+  skip: !nativeFloat32Available,
+}, () => {
+  assert.throws(() => analyzeFloat32("not a buffer"), TypeError);
+});
+
+test("rejects extra Float32 arguments", {
+  skip: !nativeFloat32Available,
+}, () => {
+  assert.throws(() => analyzeFloat32(Buffer.alloc(4), "extra"), TypeError);
+});
+
+test("rejects NaN and infinite Float32 samples", {
+  skip: !nativeFloat32Available,
+}, () => {
+  for (const sample of [NaN, Infinity, -Infinity]) {
+    const pcm = Buffer.alloc(4);
+    pcm.writeFloatLE(sample, 0);
+    assert.throws(
+      () => analyzeFloat32(pcm),
+      /Float32 samples must be finite/,
+    );
+  }
 });

@@ -21,6 +21,24 @@ export const nativeAvailable =
 export const nativePcm24Available =
   typeof nativeModule?.analyzePcm24 === "function";
 
+export const nativeFloat32Available =
+  typeof nativeModule?.analyzeFloat32 === "function";
+
+export function analyzeFloat32(buffer) {
+  if (arguments.length !== 1) {
+    throw new TypeError("Expected one Float32 Buffer");
+  }
+  if (!Buffer.isBuffer(buffer)) {
+    throw new TypeError("Input must be a Node.js Buffer");
+  }
+
+  if (!nativeFloat32Available) {
+    throw new Error("cpp_native_float32_not_built");
+  }
+
+  return nativeModule.analyzeFloat32(buffer);
+}
+
 export function analyzePcm16(buffer) {
   if (arguments.length !== 1) {
     throw new TypeError("Expected one PCM16 Buffer");

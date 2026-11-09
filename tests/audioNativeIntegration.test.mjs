@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { analyzeWavPcm16 } from '../src/audio/analyzeWavPcm16.mjs';
-import { nativeAvailable, nativePcm24Available } from '../src/native/cppEngine.mjs';
+import { nativeAvailable, nativePcm24Available, nativeFloat32Available } from '../src/native/cppEngine.mjs';
 import { createApp } from '../src/server/server.mjs';
 
 const TOKEN = 'test-token';
@@ -379,7 +379,7 @@ test("accepts extensible PCM16 with an unspecified channel mask", () => {
 
 test("rejects WAVE_FORMAT_EXTENSIBLE with a non-PCM SubFormat GUID", () => {
   const wav = makeExtensibleWav([100, -100]);
-  wav.writeUInt32LE(3, 44);
+  wav.writeUInt32LE(2, 44);
 
   const result = analyzeWavPcm16(wav);
 
@@ -558,6 +558,49 @@ function makePcm24Wav(
   return Buffer.concat([header, body]);
 }
 
+
+function makeFloat32Wav(
+  samples,
+  { channels = 1, sampleRate = 48000, extensible = false, channelMask = 0 } = {},
+) {
+  const pcm = Buffer.alloc(samples.length * 4);
+  samples.forEach((sample, index) => pcm.writeFloatLE(sample, index * 4));
+
+  const fmt = Buffer.alloc(extensible ? 40 : 16);
+  fmt.writeUInt16LE(extensible ? 0xfffe : 3, 0);
+  fmt.writeUInt16LE(channels, 2);
+  fmt.writeUInt32LE(sampleRate, 4);
+  fmt.writeUInt32LE(sampleRate * channels * 4, 8);
+  fmt.writeUInt16LE(channels * 4, 12);
+  fmt.writeUInt16LE(32, 14);
+
+  if (extensible) {
+    fmt.writeUInt16LE(22, 16);
+    fmt.writeUInt16LE(32, 18);
+    fmt.writeUInt32LE(channelMask, 20);
+    Buffer.from([
+      3, 0, 0, 0, 0, 0, 16, 0,
+      128, 0, 0, 170, 0, 56, 155, 113,
+    ]).copy(fmt, 24);
+  }
+
+  const fmtHeader = Buffer.alloc(8);
+  fmtHeader.write("fmt ", 0);
+  fmtHeader.writeUInt32LE(fmt.length, 4);
+
+  const dataHeader = Buffer.alloc(8);
+  dataHeader.write("data", 0);
+  dataHeader.writeUInt32LE(pcm.length, 4);
+
+  const body = Buffer.concat([
+    Buffer.from("WAVE"), fmtHeader, fmt, dataHeader, pcm,
+  ]);
+  const header = Buffer.alloc(8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(body.length, 4);
+  return Buffer.concat([header, body]);
+}
+
 test("analyzes mono PCM24 WAV with signed minimum and maximum samples", () => {
   const wav = makePcm24Wav([-8388608, 8388607, 0, 4194304]);
   const result = analyzeWavPcm16(wav, {
@@ -678,6 +721,96 @@ test("C++ and JavaScript produce matching PCM24 metrics", {
     assert.ok(
       Math.abs(cpp[key] - fallback[key]) < 1e-12,
       key + " differs: " + cpp[key] + " vs " + fallback[key],
+    );
+  }
+});
+
+
+test("analyzes classic Float32 WAV using JavaScript fallback", () => {
+  const wav = makeFloat32Wav([-1, -0.5, 0, 0.5, 1]);
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() { throw new Error("force_javascript_fallback"); },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.engine, "javascript");
+  assert.equal(result.sampleCount, 5);
+  assert.equal(result.peak, 1);
+  assert.ok(Math.abs(result.rms - Math.sqrt(0.5)) < 1e-12);
+  assert.equal(result.peakDbfs, 0);
+});
+
+test("preserves Float32 values above full scale", () => {
+  const wav = makeFloat32Wav([0, 2, -0.5]);
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() { throw new Error("force_javascript_fallback"); },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.peak, 2);
+  assert.ok(result.peakDbfs > 6);
+});
+
+test("analyzes extensible multichannel Float32 WAV", () => {
+  const wav = makeFloat32Wav(
+    [-1, 1, 0.5, -0.5, 0.25, -0.25],
+    { channels: 6, extensible: true, channelMask: 0x3f },
+  );
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() { throw new Error("force_javascript_fallback"); },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 6);
+  assert.equal(result.peak, 1);
+});
+
+test("accepts extensible Float32 WAV with zero channel mask", () => {
+  const wav = makeFloat32Wav([0, 0.5], {
+    channels: 2, extensible: true, channelMask: 0,
+  });
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 2);
+});
+
+test("rejects extensible Float32 WAV with invalid valid bits", () => {
+  const wav = makeFloat32Wav([0, 0.5], { extensible: true });
+  wav.writeUInt16LE(24, 38);
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_format");
+});
+
+test("C++ and JavaScript produce matching Float32 WAV metrics", {
+  skip: !nativeFloat32Available,
+}, () => {
+  const wav = makeFloat32Wav([-1, 0.75, 0, 0.5, -0.25, 0.125, 2, -1.5]);
+  const cpp = analyzeWavPcm16(wav);
+  const fallback = analyzeWavPcm16(wav, {
+    nativeAnalyzer() { throw new Error("force_javascript_fallback"); },
+  });
+
+  assert.equal(cpp.available, true);
+  assert.equal(cpp.engine, "cpp");
+  assert.equal(fallback.available, true);
+  assert.equal(fallback.engine, "javascript");
+  assert.equal(cpp.sampleCount, fallback.sampleCount);
+
+  for (const key of ["peak", "rms", "peakDbfs", "rmsDbfs"]) {
+    assert.ok(
+      Math.abs(cpp[key] - fallback[key]) < 1e-12,
+      key + " differs: " + cpp[key] + " vs " + fallback[key],
+    );
+  }
+});
+
+test("rejects non-finite Float32 WAV samples", () => {
+  for (const sample of [NaN, Infinity, -Infinity]) {
+    const wav = makeFloat32Wav([0, sample, 1]);
+    assert.throws(
+      () => analyzeWavPcm16(wav),
+      /Float32 samples must be finite/,
     );
   }
 });
