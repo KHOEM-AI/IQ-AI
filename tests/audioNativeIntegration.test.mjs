@@ -165,6 +165,141 @@ test("rejects incomplete trailing WAV chunk header", () => {
   assert.equal(result.reason, "invalid_chunk_header");
 });
 
+
+test("analyzes 3-channel and 6-channel PCM16 WAV", () => {
+  for (const channels of [3, 6]) {
+    const samples = Array.from(
+      { length: channels * 2 },
+      (_, index) => index % 2 === 0 ? 16384 : -16384,
+    );
+    const result = analyzeWavPcm16(makeWav(samples, { channels }));
+
+    assert.equal(result.available, true);
+    assert.equal(result.sampleCount, channels * 2);
+    assert.equal(result.peak, 0.5);
+    assert.ok(Math.abs(result.rms - 0.5) < 1e-12);
+  }
+});
+
+test("accepts common PCM16 sample rates", () => {
+  for (const sampleRate of [8000, 16000, 22050, 44100, 48000, 96000]) {
+    const result = analyzeWavPcm16(
+      makeWav([100, -100], { sampleRate }),
+    );
+
+    assert.equal(result.available, true, "sample rate: " + sampleRate);
+    assert.equal(result.sampleCount, 2);
+  }
+});
+
+test("rejects invalid PCM16 channel and format alignment fields", () => {
+  const cases = [
+    { offset: 22, value: 0 },
+    { offset: 24, value: 0 },
+    { offset: 32, value: 1 },
+  ];
+
+  for (const item of cases) {
+    const wav = makeWav([100, 200]);
+    wav.writeUInt16LE(item.value, item.offset);
+
+    const result = analyzeWavPcm16(wav);
+
+    assert.equal(result.available, false);
+    assert.equal(result.reason, "invalid_pcm_format");
+  }
+});
+
+test("rejects incomplete interleaved stereo frames", () => {
+  const wav = makeWav([100, 200, 300], { channels: 2 });
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_data_alignment");
+});
+
+test("accepts unknown odd-sized chunks with RIFF padding", () => {
+  const original = makeWav([100, 200]);
+  const fmtChunk = original.subarray(12, 36);
+  const dataChunk = original.subarray(36);
+  const junk = Buffer.alloc(10);
+  junk.write("JUNK", 0);
+  junk.writeUInt32LE(1, 4);
+  junk[8] = 0x41;
+  junk[9] = 0;
+
+  const body = Buffer.concat([
+    Buffer.from("WAVE"),
+    fmtChunk,
+    junk,
+    dataChunk,
+  ]);
+  const header = Buffer.alloc(8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(body.length, 4);
+
+  const result = analyzeWavPcm16(Buffer.concat([header, body]));
+
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 2);
+});
+
+test("accepts data chunk before fmt chunk", () => {
+  const original = makeWav([100, 200]);
+  const reorderedBody = Buffer.concat([
+    Buffer.from("WAVE"),
+    original.subarray(36),
+    original.subarray(12, 36),
+  ]);
+  const header = Buffer.alloc(8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(reorderedBody.length, 4);
+
+  const result = analyzeWavPcm16(Buffer.concat([header, reorderedBody]));
+
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 2);
+});
+
+test("rejects truncated RIFF chunk headers of 1 to 7 bytes", () => {
+  const original = makeWav([100, 200]);
+
+  for (let length = 1; length <= 7; length += 1) {
+    const wav = Buffer.concat([
+      original,
+      Buffer.alloc(length, 0x41),
+    ]);
+    wav.writeUInt32LE(wav.length - 8, 4);
+
+    const result = analyzeWavPcm16(wav);
+
+    assert.equal(result.available, false, "trailing bytes: " + length);
+    assert.equal(result.reason, "invalid_chunk_header");
+  }
+});
+
+test("rejects odd-sized chunk without required RIFF padding", () => {
+  const original = makeWav([100, 200]);
+  const junk = Buffer.alloc(9);
+  junk.write("JUNK", 0);
+  junk.writeUInt32LE(1, 4);
+  junk[8] = 0x41;
+
+  const body = Buffer.concat([
+    Buffer.from("WAVE"),
+    original.subarray(12),
+    junk,
+  ]);
+  const header = Buffer.alloc(8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(body.length, 4);
+
+  const result = analyzeWavPcm16(Buffer.concat([header, body]));
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_chunk_size");
+});
+
 test('production audio route returns legacy data and native analysis', async (t) => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'iqai-native-audio-'));
   const server = createApp({
