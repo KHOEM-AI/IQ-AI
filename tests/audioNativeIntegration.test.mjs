@@ -49,6 +49,53 @@ function makeWav(samples, { channels = 1, sampleRate = 16000 } = {}) {
   return Buffer.concat([header, body]);
 }
 
+
+function makeExtensibleWav(
+  samples,
+  { channels = 6, sampleRate = 48000, channelMask = 0x3f } = {},
+) {
+  const pcm = Buffer.alloc(samples.length * 2);
+  samples.forEach((sample, index) => pcm.writeInt16LE(sample, index * 2));
+
+  const fmt = Buffer.alloc(40);
+  fmt.writeUInt16LE(0xfffe, 0);
+  fmt.writeUInt16LE(channels, 2);
+  fmt.writeUInt32LE(sampleRate, 4);
+  fmt.writeUInt32LE(sampleRate * channels * 2, 8);
+  fmt.writeUInt16LE(channels * 2, 12);
+  fmt.writeUInt16LE(16, 14);
+  fmt.writeUInt16LE(22, 16);
+  fmt.writeUInt16LE(16, 18);
+  fmt.writeUInt32LE(channelMask, 20);
+  Buffer.from([
+    0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x10, 0x00,
+    0x80, 0x00, 0x00, 0xaa,
+    0x00, 0x38, 0x9b, 0x71,
+  ]).copy(fmt, 24);
+
+  const fmtHeader = Buffer.alloc(8);
+  fmtHeader.write("fmt ", 0);
+  fmtHeader.writeUInt32LE(fmt.length, 4);
+
+  const dataHeader = Buffer.alloc(8);
+  dataHeader.write("data", 0);
+  dataHeader.writeUInt32LE(pcm.length, 4);
+
+  const body = Buffer.concat([
+    Buffer.from("WAVE"),
+    fmtHeader,
+    fmt,
+    dataHeader,
+    pcm,
+  ]);
+
+  const header = Buffer.alloc(8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(body.length, 4);
+  return Buffer.concat([header, body]);
+}
+
 test('analyzes mono PCM16 WAV', () => {
   const wav = makeWav([-32768, 32767, 0, 16384]);
   const result = analyzeWavPcm16(wav);
@@ -298,6 +345,122 @@ test("rejects odd-sized chunk without required RIFF padding", () => {
 
   assert.equal(result.available, false);
   assert.equal(result.reason, "invalid_chunk_size");
+});
+
+
+test("analyzes WAVE_FORMAT_EXTENSIBLE 5.1 and 7.1 PCM16", () => {
+  for (const item of [
+    { channels: 6, channelMask: 0x3f },
+    { channels: 8, channelMask: 0x63f },
+  ]) {
+    const samples = Array.from(
+      { length: item.channels * 2 },
+      (_, index) => index % 2 === 0 ? 16384 : -16384,
+    );
+    const result = analyzeWavPcm16(
+      makeExtensibleWav(samples, item),
+    );
+
+    assert.equal(result.available, true);
+    assert.equal(result.sampleCount, item.channels * 2);
+    assert.equal(result.peak, 0.5);
+    assert.ok(Math.abs(result.rms - 0.5) < 1e-12);
+  }
+});
+
+test("accepts extensible PCM16 with an unspecified channel mask", () => {
+  const result = analyzeWavPcm16(
+    makeExtensibleWav([100, -100], { channels: 2, channelMask: 0 }),
+  );
+
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 2);
+});
+
+test("rejects WAVE_FORMAT_EXTENSIBLE with a non-PCM SubFormat GUID", () => {
+  const wav = makeExtensibleWav([100, -100]);
+  wav.writeUInt32LE(3, 44);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "unsupported_pcm_format");
+});
+
+test("rejects truncated WAVE_FORMAT_EXTENSIBLE fmt chunks", () => {
+  const wav = makeExtensibleWav([100, -100]);
+  wav.writeUInt32LE(39, 16);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_fmt_chunk");
+});
+
+test("rejects invalid extensible cbSize and valid bits", () => {
+  for (const item of [
+    { offset: 36, value: 21 },
+    { offset: 38, value: 24 },
+  ]) {
+    const wav = makeExtensibleWav([100, -100]);
+    wav.writeUInt16LE(item.value, item.offset);
+
+    const result = analyzeWavPcm16(wav);
+
+    assert.equal(result.available, false);
+    assert.equal(result.reason, "invalid_pcm_format");
+  }
+});
+
+test("rejects extensible channel masks with the wrong speaker count", () => {
+  const wav = makeExtensibleWav([100, -100], {
+    channels: 2,
+    channelMask: 0x3f,
+  });
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_format");
+});
+
+
+test("rejects extensible cbSize larger than available extension", () => {
+  const wav = makeExtensibleWav([100, -100]);
+  wav.writeUInt16LE(23, 36);
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_fmt_chunk");
+});
+
+test("rejects PCM SubFormat GUID with a single incorrect byte", () => {
+  const wav = makeExtensibleWav([100, -100]);
+  wav[59] ^= 1;
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "unsupported_pcm_format");
+});
+
+test("rejects extensible valid bits other than 16", () => {
+  for (const value of [0, 1, 15, 24, 32]) {
+    const wav = makeExtensibleWav([100, -100]);
+    wav.writeUInt16LE(value, 38);
+    const result = analyzeWavPcm16(wav);
+    assert.equal(result.available, false, "validBits=" + value);
+    assert.equal(result.reason, "invalid_pcm_format");
+  }
+});
+
+test("rejects channel masks with too few or too many speaker bits", () => {
+  for (const channelMask of [0x01, 0x07, 0xffffffff]) {
+    const wav = makeExtensibleWav([100, -100], {
+      channels: 2,
+      channelMask,
+    });
+    const result = analyzeWavPcm16(wav);
+    assert.equal(result.available, false, "channelMask=" + channelMask);
+    assert.equal(result.reason, "invalid_pcm_format");
+  }
 });
 
 test('production audio route returns legacy data and native analysis', async (t) => {

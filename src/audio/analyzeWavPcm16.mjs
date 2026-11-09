@@ -41,10 +41,7 @@ function parsePcm16Data(buf) {
     }
 
     if (id === 'fmt ') {
-      if (fmt !== null) {
-        return { ok: false, reason: 'invalid_fmt_chunk' };
-      }
-      if (size < 16) {
+      if (fmt !== null || size < 16) {
         return { ok: false, reason: 'invalid_fmt_chunk' };
       }
 
@@ -56,6 +53,43 @@ function parsePcm16Data(buf) {
         blockAlign: buf.readUInt16LE(body + 12),
         bitsPerSample: buf.readUInt16LE(body + 14),
       };
+
+      if (fmt.audioFormat === 0xfffe) {
+        if (size < 40) {
+          return { ok: false, reason: 'invalid_fmt_chunk' };
+        }
+
+        const cbSize = buf.readUInt16LE(body + 16);
+        if (cbSize < 22) {
+          return { ok: false, reason: 'invalid_pcm_format' };
+        }
+        if (cbSize > size - 18) {
+          return { ok: false, reason: 'invalid_fmt_chunk' };
+        }
+
+        const validBits = buf.readUInt16LE(body + 18);
+        const channelMask = buf.readUInt32LE(body + 20);
+        const subFormat = buf.subarray(body + 24, body + 40);
+        const pcmGuid = Buffer.from([
+          1, 0, 0, 0, 0, 0, 16, 0,
+          128, 0, 0, 170, 0, 56, 155, 113,
+        ]);
+
+        if (!subFormat.equals(pcmGuid)) {
+          return { ok: false, reason: 'unsupported_pcm_format' };
+        }
+
+        if (validBits !== 16) {
+          return { ok: false, reason: 'invalid_pcm_format' };
+        }
+
+        if (
+          channelMask !== 0 &&
+          channelMask.toString(2).replace(/0/g, "").length !== fmt.channels
+        ) {
+          return { ok: false, reason: 'invalid_pcm_format' };
+        }
+      }
     } else if (id === 'data' && data === null) {
       data = buf.subarray(body, end);
     }
@@ -70,7 +104,7 @@ function parsePcm16Data(buf) {
   if (!fmt) return { ok: false, reason: 'no_fmt_chunk' };
   if (!data) return { ok: false, reason: 'no_data_chunk' };
 
-  if (fmt.audioFormat !== 1 || fmt.bitsPerSample !== 16) {
+  if ((fmt.audioFormat !== 1 && fmt.audioFormat !== 0xfffe) || fmt.bitsPerSample !== 16) {
     return { ok: false, reason: 'unsupported_pcm_format' };
   }
 
