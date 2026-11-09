@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   analyzePcm16,
+  analyzePcm24,
   nativeAvailable,
+  nativePcm24Available,
 } from '../src/native/cppEngine.mjs';
 
 test('C++ Native Module is available after build', {
@@ -98,6 +100,94 @@ test('rejects non-Buffer input', {
 test('rejects extra arguments', { skip: !nativeAvailable }, () => {
   assert.throws(
     () => analyzePcm16(Buffer.alloc(2), 'extra'),
+    TypeError,
+  );
+});
+
+
+test("C++ Native PCM24 Module is available after build", {
+  skip: !nativePcm24Available,
+}, () => {
+  assert.equal(nativePcm24Available, true);
+});
+
+test("analyzes PCM24 peak, RMS and sample count", {
+  skip: !nativePcm24Available,
+}, () => {
+  const pcm = Buffer.alloc(12);
+  pcm.writeIntLE(-8388608, 0, 3);
+  pcm.writeIntLE(8388607, 3, 3);
+  pcm.writeIntLE(0, 6, 3);
+  pcm.writeIntLE(4194304, 9, 3);
+
+  const result = analyzePcm24(pcm);
+
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms > 0 && result.rms <= 1);
+  assert.ok(result.peakDbfs <= 0);
+  assert.ok(result.rmsDbfs <= 0);
+});
+
+test("handles PCM24 silence correctly", {
+  skip: !nativePcm24Available,
+}, () => {
+  const result = analyzePcm24(Buffer.alloc(3072));
+
+  assert.equal(result.sampleCount, 1024);
+  assert.equal(result.peak, 0);
+  assert.equal(result.rms, 0);
+  assert.equal(result.peakDbfs, -160);
+  assert.equal(result.rmsDbfs, -160);
+});
+
+test("handles PCM24 minimum and maximum values", {
+  skip: !nativePcm24Available,
+}, () => {
+  const pcm = Buffer.alloc(6);
+  pcm.writeIntLE(-8388608, 0, 3);
+  pcm.writeIntLE(8388607, 3, 3);
+
+  const result = analyzePcm24(pcm);
+
+  assert.equal(result.sampleCount, 2);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms <= 1);
+  assert.ok(result.rms > 0.999);
+});
+
+test("rejects incomplete PCM24 samples", {
+  skip: !nativePcm24Available,
+}, () => {
+  assert.throws(
+    () => analyzePcm24(Buffer.from([1, 2])),
+    TypeError,
+  );
+});
+
+test("rejects empty PCM24 input", {
+  skip: !nativePcm24Available,
+}, () => {
+  assert.throws(
+    () => analyzePcm24(Buffer.alloc(0)),
+    TypeError,
+  );
+});
+
+test("rejects non-Buffer PCM24 input", {
+  skip: !nativePcm24Available,
+}, () => {
+  assert.throws(
+    () => analyzePcm24("not a buffer"),
+    TypeError,
+  );
+});
+
+test("rejects extra PCM24 arguments", {
+  skip: !nativePcm24Available,
+}, () => {
+  assert.throws(
+    () => analyzePcm24(Buffer.alloc(3), "extra"),
     TypeError,
   );
 });

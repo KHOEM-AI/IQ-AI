@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { analyzeWavPcm16 } from '../src/audio/analyzeWavPcm16.mjs';
-import { nativeAvailable } from '../src/native/cppEngine.mjs';
+import { nativeAvailable, nativePcm24Available } from '../src/native/cppEngine.mjs';
 import { createApp } from '../src/server/server.mjs';
 
 const TOKEN = 'test-token';
@@ -503,4 +503,181 @@ test('production audio route returns legacy data and native analysis', async (t)
   assert.equal(json.analysis.engine, nativeAvailable ? 'cpp' : 'javascript');
   assert.equal(json.analysis.sampleCount, 4);
   assert.equal(json.error, null);
+});
+
+
+function makePcm24Wav(
+  samples,
+  { channels = 1, sampleRate = 48000, extensible = false, channelMask = 0 } = {},
+) {
+  const pcm = Buffer.alloc(samples.length * 3);
+
+  samples.forEach((sample, index) => {
+    pcm.writeUIntLE(sample & 0xffffff, index * 3, 3);
+  });
+
+  const fmt = Buffer.alloc(extensible ? 40 : 16);
+  fmt.writeUInt16LE(extensible ? 0xfffe : 1, 0);
+  fmt.writeUInt16LE(channels, 2);
+  fmt.writeUInt32LE(sampleRate, 4);
+  fmt.writeUInt32LE(sampleRate * channels * 3, 8);
+  fmt.writeUInt16LE(channels * 3, 12);
+  fmt.writeUInt16LE(24, 14);
+
+  if (extensible) {
+    fmt.writeUInt16LE(22, 16);
+    fmt.writeUInt16LE(24, 18);
+    fmt.writeUInt32LE(channelMask, 20);
+    Buffer.from([
+      0x01, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x10, 0x00,
+      0x80, 0x00, 0x00, 0xaa,
+      0x00, 0x38, 0x9b, 0x71,
+    ]).copy(fmt, 24);
+  }
+
+  const fmtHeader = Buffer.alloc(8);
+  fmtHeader.write("fmt ", 0);
+  fmtHeader.writeUInt32LE(fmt.length, 4);
+
+  const dataHeader = Buffer.alloc(8);
+  dataHeader.write("data", 0);
+  dataHeader.writeUInt32LE(pcm.length, 4);
+
+  const body = Buffer.concat([
+    Buffer.from("WAVE"),
+    fmtHeader,
+    fmt,
+    dataHeader,
+    pcm,
+  ]);
+
+  const header = Buffer.alloc(8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(body.length, 4);
+  return Buffer.concat([header, body]);
+}
+
+test("analyzes mono PCM24 WAV with signed minimum and maximum samples", () => {
+  const wav = makePcm24Wav([-8388608, 8388607, 0, 4194304]);
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("force_javascript_fallback");
+    },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.engine, "javascript");
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms > 0 && result.rms <= 1);
+});
+
+test("analyzes interleaved multichannel PCM24 WAV", () => {
+  const wav = makePcm24Wav(
+    [-8388608, 8388607, 0, 4194304, -4194304, 1],
+    { channels: 2 },
+  );
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("force_javascript_fallback");
+    },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.engine, "javascript");
+  assert.equal(result.sampleCount, 6);
+  assert.equal(result.peak, 1);
+});
+
+test("analyzes extensible 24-bit PCM WAV with a 5.1 channel mask", () => {
+  const wav = makePcm24Wav(
+    [-8388608, 8388607, 0, 4194304, -4194304, 1],
+    { channels: 6, extensible: true, channelMask: 0x3f },
+  );
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("force_javascript_fallback");
+    },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.engine, "javascript");
+  assert.equal(result.sampleCount, 6);
+  assert.equal(result.peak, 1);
+});
+
+test("accepts extensible 24-bit PCM WAV with zero channel mask", () => {
+  const wav = makePcm24Wav([0, 1], {
+    channels: 2,
+    extensible: true,
+    channelMask: 0,
+  });
+  const result = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("force_javascript_fallback");
+    },
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 2);
+});
+
+test("rejects extensible PCM24 when valid bits do not match", () => {
+  const wav = makePcm24Wav([0, 1], {
+    extensible: true,
+    channelMask: 0,
+  });
+  wav.writeUInt16LE(20, 38);
+
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_format");
+});
+
+test("rejects PCM24 WAV with invalid block alignment", () => {
+  const wav = makePcm24Wav([0, 1, 2, 3], { channels: 2 });
+  wav.writeUInt16LE(5, 32);
+
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_format");
+});
+
+test("rejects PCM24 WAV with inconsistent byte rate", () => {
+  const wav = makePcm24Wav([0, 1, 2, 3], { channels: 2 });
+  wav.writeUInt32LE(1, 28);
+
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_pcm_format");
+});
+
+test("C++ and JavaScript produce matching PCM24 metrics", {
+  skip: !nativePcm24Available,
+}, () => {
+  const wav = makePcm24Wav([
+    -8388608, 8388607, 0, 4194304,
+    -4194304, 2097152, -2097152, 1,
+  ]);
+
+  const cpp = analyzeWavPcm16(wav);
+  const fallback = analyzeWavPcm16(wav, {
+    nativeAnalyzer() {
+      throw new Error("force_javascript_fallback");
+    },
+  });
+
+  assert.equal(cpp.available, true);
+  assert.equal(cpp.engine, "cpp");
+  assert.equal(fallback.available, true);
+  assert.equal(fallback.engine, "javascript");
+  assert.equal(cpp.sampleCount, fallback.sampleCount);
+
+  for (const key of ["peak", "rms", "peakDbfs", "rmsDbfs"]) {
+    assert.ok(
+      Math.abs(cpp[key] - fallback[key]) < 1e-12,
+      key + " differs: " + cpp[key] + " vs " + fallback[key],
+    );
+  }
 });
