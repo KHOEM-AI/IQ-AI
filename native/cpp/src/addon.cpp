@@ -12,6 +12,173 @@ napi_value throw_type_error(napi_env env, const char* message) {
   return nullptr;
 }
 
+napi_value analyze_pcm8(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value argv[2];
+  napi_status status =
+      napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to read arguments");
+    return nullptr;
+  }
+  if (argc != 1) {
+    return throw_type_error(env, "Expected one PCM8 Buffer");
+  }
+
+  bool is_buffer = false;
+  status = napi_is_buffer(env, argv[0], &is_buffer);
+  if (status != napi_ok || !is_buffer) {
+    return throw_type_error(env, "Input must be a Node.js Buffer");
+  }
+
+  void* raw_data = nullptr;
+  size_t length = 0;
+  status = napi_get_buffer_info(env, argv[0], &raw_data, &length);
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to read PCM8 Buffer");
+    return nullptr;
+  }
+  if (length == 0) {
+    return throw_type_error(env, "PCM8 Buffer must not be empty");
+  }
+
+  const auto* bytes = static_cast<const uint8_t*>(raw_data);
+  const size_t sample_count = length;
+  double sum_squares = 0.0;
+  double peak = 0.0;
+
+  for (size_t i = 0; i < sample_count; ++i) {
+    const double normalized =
+        (static_cast<double>(bytes[i]) - 128.0) / 128.0;
+    const double magnitude = std::fabs(normalized);
+    if (magnitude > peak) peak = magnitude;
+    sum_squares += normalized * normalized;
+  }
+
+  const double rms =
+      std::sqrt(sum_squares / static_cast<double>(sample_count));
+  const double peak_dbfs =
+      peak > 0.0 ? 20.0 * std::log10(peak) : -160.0;
+  const double rms_dbfs =
+      rms > 0.0 ? 20.0 * std::log10(rms) : -160.0;
+
+  napi_value result;
+  if (napi_create_object(env, &result) != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to create result");
+    return nullptr;
+  }
+
+  auto set_number = [&](const char* name, double number) -> bool {
+    napi_value field;
+    if (napi_create_double(env, number, &field) != napi_ok) {
+      return false;
+    }
+    return napi_set_named_property(env, result, name, field) == napi_ok;
+  };
+
+  if (!set_number("sampleCount", static_cast<double>(sample_count)) ||
+      !set_number("peak", peak) ||
+      !set_number("rms", rms) ||
+      !set_number("peakDbfs", peak_dbfs) ||
+      !set_number("rmsDbfs", rms_dbfs)) {
+    napi_throw_error(env, nullptr, "Unable to create result field");
+    return nullptr;
+  }
+
+  return result;
+}
+
+napi_value analyze_pcm32(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value argv[2];
+  napi_status status =
+      napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to read arguments");
+    return nullptr;
+  }
+  if (argc != 1) {
+    return throw_type_error(env, "Expected one PCM32 Buffer");
+  }
+
+  bool is_buffer = false;
+  status = napi_is_buffer(env, argv[0], &is_buffer);
+  if (status != napi_ok || !is_buffer) {
+    return throw_type_error(env, "Input must be a Node.js Buffer");
+  }
+
+  void* raw_data = nullptr;
+  size_t length = 0;
+  status = napi_get_buffer_info(env, argv[0], &raw_data, &length);
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to read PCM32 Buffer");
+    return nullptr;
+  }
+  if (length == 0 || length % 4 != 0) {
+    return throw_type_error(
+        env, "PCM32 Buffer must contain complete 32-bit samples");
+  }
+
+  const auto* bytes = static_cast<const uint8_t*>(raw_data);
+  const size_t sample_count = length / 4;
+  double sum_squares = 0.0;
+  double peak = 0.0;
+
+  for (size_t i = 0; i < sample_count; ++i) {
+    const size_t offset = i * 4;
+    const uint32_t raw =
+        static_cast<uint32_t>(bytes[offset]) |
+        (static_cast<uint32_t>(bytes[offset + 1]) << 8) |
+        (static_cast<uint32_t>(bytes[offset + 2]) << 16) |
+        (static_cast<uint32_t>(bytes[offset + 3]) << 24);
+
+    const int64_t signed_sample =
+        raw >= 0x80000000u
+            ? static_cast<int64_t>(raw) - 4294967296LL
+            : static_cast<int64_t>(raw);
+
+    const double normalized =
+        static_cast<double>(signed_sample) / 2147483648.0;
+    const double magnitude = std::fabs(normalized);
+    if (magnitude > peak) peak = magnitude;
+    sum_squares += normalized * normalized;
+  }
+
+  const double rms =
+      std::sqrt(sum_squares / static_cast<double>(sample_count));
+  const double peak_dbfs =
+      peak > 0.0 ? 20.0 * std::log10(peak) : -160.0;
+  const double rms_dbfs =
+      rms > 0.0 ? 20.0 * std::log10(rms) : -160.0;
+
+  napi_value result;
+  if (napi_create_object(env, &result) != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to create result");
+    return nullptr;
+  }
+
+  auto set_number = [&](const char* name, double number) -> bool {
+    napi_value field;
+    if (napi_create_double(env, number, &field) != napi_ok) {
+      return false;
+    }
+    return napi_set_named_property(env, result, name, field) == napi_ok;
+  };
+
+  if (!set_number("sampleCount", static_cast<double>(sample_count)) ||
+      !set_number("peak", peak) ||
+      !set_number("rms", rms) ||
+      !set_number("peakDbfs", peak_dbfs) ||
+      !set_number("rmsDbfs", rms_dbfs)) {
+    napi_throw_error(env, nullptr, "Unable to create result field");
+    return nullptr;
+  }
+
+  return result;
+}
+
 napi_value analyze_pcm16(napi_env env, napi_callback_info info) {
   size_t argc = 2;
   napi_value argv[2];
@@ -389,6 +556,28 @@ napi_value analyze_float64(napi_env env, napi_callback_info info) {
 
 napi_value initialize(napi_env env, napi_value exports) {
   napi_value function;
+
+  if (napi_create_function(env, "analyzePcm8", NAPI_AUTO_LENGTH,
+          analyze_pcm8, nullptr, &function) != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to register analyzePcm8");
+    return nullptr;
+  }
+  if (napi_set_named_property(env, exports, "analyzePcm8", function) !=
+      napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to export analyzePcm8");
+    return nullptr;
+  }
+
+  if (napi_create_function(env, "analyzePcm32", NAPI_AUTO_LENGTH,
+          analyze_pcm32, nullptr, &function) != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to register analyzePcm32");
+    return nullptr;
+  }
+  if (napi_set_named_property(env, exports, "analyzePcm32", function) !=
+      napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to export analyzePcm32");
+    return nullptr;
+  }
 
   if (napi_create_function(
           env,

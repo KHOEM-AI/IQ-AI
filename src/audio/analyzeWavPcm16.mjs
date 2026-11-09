@@ -1,10 +1,14 @@
 import {
+  analyzePcm8,
   analyzePcm16,
   analyzePcm24,
+  analyzePcm32,
   analyzeFloat32,
   analyzeFloat64,
   nativeAvailable,
+  nativePcm8Available,
   nativePcm24Available,
+  nativePcm32Available,
   nativeFloat32Available,
   nativeFloat64Available,
 } from "../native/cppEngine.mjs";
@@ -95,8 +99,10 @@ function parsePcm16Data(buf) {
 
         if (
           (fmt.audioFormat === 1 &&
+            fmt.bitsPerSample !== 8 &&
             fmt.bitsPerSample !== 16 &&
-            fmt.bitsPerSample !== 24) ||
+            fmt.bitsPerSample !== 24 &&
+            fmt.bitsPerSample !== 32) ||
           (fmt.audioFormat === 3 &&
             fmt.bitsPerSample !== 32 &&
             fmt.bitsPerSample !== 64) ||
@@ -128,8 +134,10 @@ function parsePcm16Data(buf) {
 
   if (
     (fmt.audioFormat === 1 &&
+      fmt.bitsPerSample !== 8 &&
       fmt.bitsPerSample !== 16 &&
-      fmt.bitsPerSample !== 24) ||
+      fmt.bitsPerSample !== 24 &&
+      fmt.bitsPerSample !== 32) ||
     (fmt.audioFormat === 3 &&
       fmt.bitsPerSample !== 32 &&
       fmt.bitsPerSample !== 64) ||
@@ -154,6 +162,50 @@ function parsePcm16Data(buf) {
   }
 
   return { ok: true, fmt, data };
+}
+
+function analyzePcm8JavaScript(buffer) {
+  const sampleCount = buffer.length;
+  let peak = 0;
+  let sumSquares = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 1) {
+    const normalized = (buffer.readUInt8(offset) - 128) / 128;
+    const magnitude = Math.abs(normalized);
+    if (magnitude > peak) peak = magnitude;
+    sumSquares += normalized * normalized;
+  }
+
+  const rms = Math.sqrt(sumSquares / sampleCount);
+  return {
+    sampleCount,
+    peak,
+    rms,
+    peakDbfs: peak > 0 ? 20 * Math.log10(peak) : -160,
+    rmsDbfs: rms > 0 ? 20 * Math.log10(rms) : -160,
+  };
+}
+
+function analyzePcm32JavaScript(buffer) {
+  const sampleCount = buffer.length / 4;
+  let peak = 0;
+  let sumSquares = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const normalized = buffer.readInt32LE(offset) / 2147483648;
+    const magnitude = Math.abs(normalized);
+    if (magnitude > peak) peak = magnitude;
+    sumSquares += normalized * normalized;
+  }
+
+  const rms = Math.sqrt(sumSquares / sampleCount);
+  return {
+    sampleCount,
+    peak,
+    rms,
+    peakDbfs: peak > 0 ? 20 * Math.log10(peak) : -160,
+    rmsDbfs: rms > 0 ? 20 * Math.log10(rms) : -160,
+  };
 }
 
 function analyzePcm16JavaScript(buffer) {
@@ -275,22 +327,34 @@ export function analyzeWavPcm16(buf, options = {}) {
     };
   }
 
+  const isPcm8 =
+    parsed.fmt.audioFormat === 1 && parsed.fmt.bitsPerSample === 8;
+  const isPcm32 =
+    parsed.fmt.audioFormat === 1 && parsed.fmt.bitsPerSample === 32;
   const isFloat64 =
     parsed.fmt.audioFormat === 3 && parsed.fmt.bitsPerSample === 64;
   const isFloat32 =
     parsed.fmt.audioFormat === 3 && parsed.fmt.bitsPerSample === 32;
   const isPcm24 = parsed.fmt.bitsPerSample === 24;
 
-  const nativeAnalyzer = isFloat64
-    ? options?.nativeAnalyzer ?? (nativeFloat64Available ? analyzeFloat64 : null)
+  const nativeAnalyzer = isPcm8
+    ? options?.nativeAnalyzer ?? (nativePcm8Available ? analyzePcm8 : null)
+    : isPcm32
+      ? options?.nativeAnalyzer ?? (nativePcm32Available ? analyzePcm32 : null)
+      : isFloat64
+        ? options?.nativeAnalyzer ?? (nativeFloat64Available ? analyzeFloat64 : null)
     : isFloat32
       ? options?.nativeAnalyzer ?? (nativeFloat32Available ? analyzeFloat32 : null)
       : isPcm24
         ? options?.nativeAnalyzer ?? (nativePcm24Available ? analyzePcm24 : null)
         : options?.nativeAnalyzer ?? (nativeAvailable ? analyzePcm16 : null);
 
-  const javascriptAnalyzer = isFloat64
-    ? analyzeFloat64JavaScript
+  const javascriptAnalyzer = isPcm8
+    ? analyzePcm8JavaScript
+    : isPcm32
+      ? analyzePcm32JavaScript
+      : isFloat64
+        ? analyzeFloat64JavaScript
     : isFloat32
       ? analyzeFloat32JavaScript
       : isPcm24

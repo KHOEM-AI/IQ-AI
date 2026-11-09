@@ -2,12 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  analyzePcm8,
   analyzePcm16,
   analyzePcm24,
+  analyzePcm32,
   analyzeFloat32,
   analyzeFloat64,
   nativeAvailable,
+  nativePcm8Available,
   nativePcm24Available,
+  nativePcm32Available,
   nativeFloat32Available,
   nativeFloat64Available,
 } from '../src/native/cppEngine.mjs';
@@ -360,4 +364,98 @@ test("rejects NaN and infinite Float64 samples", {
       /Float64 samples must be finite/,
     );
   }
+});
+
+
+test("C++ Native PCM8 Module is available after build", {
+  skip: !nativePcm8Available,
+}, () => {
+  assert.equal(nativePcm8Available, true);
+});
+
+test("analyzes PCM8 peak, RMS and sample count", {
+  skip: !nativePcm8Available,
+}, () => {
+  const pcm = Buffer.from([0, 128, 255, 192]);
+  const result = analyzePcm8(pcm);
+
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms > 0 && result.rms <= 1);
+  assert.equal(result.peakDbfs, 0);
+  assert.ok(result.rmsDbfs <= 0);
+});
+
+test("handles PCM8 silence correctly", {
+  skip: !nativePcm8Available,
+}, () => {
+  const result = analyzePcm8(Buffer.alloc(256, 128));
+
+  assert.equal(result.sampleCount, 256);
+  assert.equal(result.peak, 0);
+  assert.equal(result.rms, 0);
+  assert.equal(result.peakDbfs, -160);
+  assert.equal(result.rmsDbfs, -160);
+});
+
+test("handles PCM8 minimum and maximum values", {
+  skip: !nativePcm8Available,
+}, () => {
+  const result = analyzePcm8(Buffer.from([0, 255]));
+
+  assert.equal(result.sampleCount, 2);
+  assert.equal(result.peak, 1);
+  assert.ok(Math.abs(result.rms - Math.sqrt((1 + (127 / 128) ** 2) / 2)) < 1e-12);
+});
+
+test("rejects empty, non-Buffer and extra PCM8 input", {
+  skip: !nativePcm8Available,
+}, () => {
+  assert.throws(() => analyzePcm8(Buffer.alloc(0)), TypeError);
+  assert.throws(() => analyzePcm8("not a buffer"), TypeError);
+  assert.throws(() => analyzePcm8(Buffer.from([128]), "extra"), TypeError);
+});
+
+test("C++ Native PCM32 Module is available after build", {
+  skip: !nativePcm32Available,
+}, () => {
+  assert.equal(nativePcm32Available, true);
+});
+
+test("analyzes PCM32 peak, RMS and sample count", {
+  skip: !nativePcm32Available,
+}, () => {
+  const pcm = Buffer.alloc(16);
+  [-2147483648, -1073741824, 0, 2147483647].forEach((sample, index) => {
+    pcm.writeInt32LE(sample, index * 4);
+  });
+
+  const result = analyzePcm32(pcm);
+
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms > 0 && result.rms <= 1);
+  assert.equal(result.peakDbfs, 0);
+  assert.ok(result.rmsDbfs <= 0);
+});
+
+test("handles PCM32 silence correctly", {
+  skip: !nativePcm32Available,
+}, () => {
+  const result = analyzePcm32(Buffer.alloc(1024));
+
+  assert.equal(result.sampleCount, 256);
+  assert.equal(result.peak, 0);
+  assert.equal(result.rms, 0);
+  assert.equal(result.peakDbfs, -160);
+  assert.equal(result.rmsDbfs, -160);
+});
+
+test("rejects incomplete, empty, non-Buffer and extra PCM32 input", {
+  skip: !nativePcm32Available,
+}, () => {
+  assert.throws(() => analyzePcm32(Buffer.from([1, 2, 3])), TypeError);
+  assert.throws(() => analyzePcm32(Buffer.alloc(0)), TypeError);
+  assert.throws(() => analyzePcm32("not a buffer"), TypeError);
+  assert.throws(() => analyzePcm32(Buffer.alloc(4), "extra"), TypeError);
 });

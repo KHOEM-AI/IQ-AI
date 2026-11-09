@@ -15,6 +15,12 @@ try {
   nativeModule = null;
 }
 
+export const nativePcm8Available =
+  typeof nativeModule?.analyzePcm8 === "function";
+
+export const nativePcm32Available =
+  typeof nativeModule?.analyzePcm32 === "function";
+
 export const nativeAvailable =
   typeof nativeModule?.analyzePcm16 === 'function';
 
@@ -55,6 +61,32 @@ export function analyzeFloat64(buffer) {
   }
 
   return nativeModule.analyzeFloat64(buffer);
+}
+
+export function analyzePcm8(buffer) {
+  if (arguments.length !== 1) {
+    throw new TypeError("Expected one PCM8 Buffer");
+  }
+  if (!Buffer.isBuffer(buffer)) {
+    throw new TypeError("Input must be a Node.js Buffer");
+  }
+  if (!nativePcm8Available) {
+    throw new Error("cpp_native_pcm8_not_built");
+  }
+  return nativeModule.analyzePcm8(buffer);
+}
+
+export function analyzePcm32(buffer) {
+  if (arguments.length !== 1) {
+    throw new TypeError("Expected one PCM32 Buffer");
+  }
+  if (!Buffer.isBuffer(buffer)) {
+    throw new TypeError("Input must be a Node.js Buffer");
+  }
+  if (!nativePcm32Available) {
+    throw new Error("cpp_native_pcm32_not_built");
+  }
+  return nativeModule.analyzePcm32(buffer);
 }
 
 export function analyzePcm16(buffer) {
