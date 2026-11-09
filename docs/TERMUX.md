@@ -17,12 +17,26 @@ Without it those routes return `503 ffmpeg_missing`; everything else still works
 ```bash
 cd ~/IQ-AI
 cp .env.example .env
-# generate a token and put it in .env (value is not printed to the screen)
-sed -i "s/^IQAI_TOKEN=.*/IQAI_TOKEN=$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')/" .env
+# one token, kept in ~/.iqai-token and copied into .env (the value is never printed)
+[ -s ~/.iqai-token ] || (umask 077; head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n' > ~/.iqai-token)
+f=$(tr -d ' \r\n' < ~/.iqai-token)
+sed -i "s|^IQAI_TOKEN=.*|IQAI_TOKEN=$f|" .env
 grep -c '^IQAI_TOKEN=' .env     # should print 1
 ```
 
-The same token must be set in `~/ai-project/AI/.env` (the Vite `/iqai` proxy reads it).
+**Which token does the UI use?** The `ai` launcher (`~/KSV/ai.sh`) does `export IQAI_TOKEN="$(cat "$TF")"` and starts the
+UI with it, so the Vite `/iqai` proxy sends the token from `~/.iqai-token` (`TF` is assumed to be that file; its hash matched
+the Vite process in practice). `~/IQ-AI/.env` must hold the **same** value, otherwise the UI shows
+"Missing or invalid token" (401) while a direct `curl` to :8799 works. `ai.sh restart` inside `~/IQ-AI` starts the server
+from `.env` only, so a stale `.env` shows up right after such a restart.
+
+Check that they match (prints only 8 hex characters of each hash):
+
+```bash
+h(){ printf %s "$1" | sha256sum | cut -c1-8; }
+h "$(tr -d ' \r\n' < ~/.iqai-token)"; h "$(grep -m1 '^IQAI_TOKEN=' ~/IQ-AI/.env | cut -d= -f2-)"   # must be equal
+```
+
 Never paste the token into chat or commit `.env`.
 
 | Variable | Default | Meaning |
@@ -77,6 +91,7 @@ If you get `font_missing`, check the font path in `src/video/textToVideo.mjs` (`
 | Symptom | Cause | Fix |
 |---|---|---|
 | `401 unauthorized` | missing/wrong token | send `Authorization: Bearer <IQAI_TOKEN>` |
+| UI says "Missing or invalid token" but direct `curl` works | `~/.iqai-token` (used by the UI proxy) differs from `~/IQ-AI/.env` | compare hashes (section 2), copy `~/.iqai-token` into `.env`, then `./ai.sh restart` |
 | `503 ffmpeg_missing` | ffmpeg not installed | `pkg install ffmpeg` |
 | `501 provider_not_configured` | TTS / generative AI not connected | expected, see [STATUS](STATUS.md) |
 | `font_missing` | Khmer font not found | install Noto Sans Khmer, check `KHMER_FONT` |

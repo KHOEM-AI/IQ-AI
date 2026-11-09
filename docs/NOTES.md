@@ -16,8 +16,9 @@
     npm test
 
 - `.env` មិនត្រូវ push ទៅ GitHub ទេ (ត្រូវនៅក្នុង .gitignore)
-- IQAI_TOKEN ត្រូវដូចគ្នាទាំងក្នុង `~/IQ-AI/.env` និង `~/ai-project/AI/.env`
-  (Vite proxy ក្នុង AI/vite.config.ts ប្រើ process.env.IQAI_TOKEN)
+- IQAI_TOKEN ត្រូវដូចគ្នាក្នុង `~/IQ-AI/.env` និង `~/.iqai-token`
+  (script `ai` ក្នុង ~/KSV/ai.sh export វាពី `~/.iqai-token` ហើយ Vite proxy ក្នុង AI/vite.config.ts ប្រើ process.env.IQAI_TOKEN;
+  បើខុសគ្នា UI បង្ហាញ "Missing or invalid token"។ មើល docs/TERMUX.md)
 - Termux គ្មាន `/tmp` ប្រើ `$PREFIX/tmp` ជំនួស
 
 ## ស្ថានភាព
