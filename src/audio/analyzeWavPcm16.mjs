@@ -118,7 +118,10 @@ function parsePcm16Data(buf) {
           return { ok: false, reason: "invalid_pcm_format" };
         }
       }
-    } else if (id === "data" && data === null) {
+    } else if (id === "data") {
+      if (data !== null) {
+        return { ok: false, reason: "invalid_data_chunk" };
+      }
       data = buf.subarray(body, end);
     }
 

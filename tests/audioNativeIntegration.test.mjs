@@ -1209,3 +1209,16 @@ test("C++ and JavaScript produce matching PCM32 WAV metrics", {
     assert.ok(Math.abs(cpp[key] - fallback[key]) < 1e-12);
   }
 });
+
+test("rejects duplicate WAV data chunks", () => {
+  const original = makeWav([100, 200]);
+  const wav = Buffer.concat([
+    original,
+    original.subarray(36),
+  ]);
+  wav.writeUInt32LE(wav.length - 8, 4);
+
+  const result = analyzeWavPcm16(wav);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, "invalid_data_chunk");
+});
