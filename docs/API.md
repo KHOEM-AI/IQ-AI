@@ -60,3 +60,40 @@ Full details in docs/AUDIO.md.
 
 Errors: 400 `invalid_field` (with `message`), 400 `bad_json`, 404 `not_found`, 413 `too_large` (body over 64 KB).
 `id`, `mime`, `size`, `format` and `createdAt` can not be changed.
+
+## Sound library: core routes
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /api/v1/sounds?q=&category=&tag=&favorite=&limit= | Search the library |
+| POST | /api/v1/sounds/upload | Raw audio body; metadata in `X-Filename`, `X-Category`, `X-Tags`, `X-Source`, `X-License` (percent-encoded) |
+| GET | /api/v1/sounds/:id | Metadata |
+| GET | /api/v1/sounds/:id/content | Audio bytes (`?download=1` forces download) |
+| DELETE | /api/v1/sounds/:id | Delete (token) |
+| GET | /api/v1/audio/health | Audio feature flags |
+
+## Audio edit
+`POST /api/v1/audio/edit` is documented in docs/AUDIO.md (trim, fade, reverse, normalize, denoise, removeSilence).
+
+## Inspect (read file info, nothing is stored)
+| Method | Path | Body -> result |
+|---|---|---|
+| POST | /api/v1/audio/inspect | WAV (max 20 MB) -> sample rate, channels, duration |
+| POST | /api/v1/images/inspect | PNG/JPEG/GIF/WebP -> width, height |
+| POST | /api/v1/videos/inspect | MP4/WebM -> width, height, duration |
+
+## Emotion
+| Method | Path | Purpose |
+|---|---|---|
+| POST | /api/v1/emotion/analyze | JSON `{"text":"..."}` -> emotion. Rule-based (Khmer keywords, negation, emoji); body max 64 KB |
+
+## Video generation (ffmpeg, no AI model)
+Full details in docs/VIDEO.md.
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /api/v1/videos/effects | Photo effects and sfx types |
+| POST | /api/v1/videos/photo?effect=&durationSec=&width=&height=&sfx= | Raw image -> mp4 (`X-Applied` header lists applied settings) |
+| POST | /api/v1/videos/text | JSON `{"text",...}` -> mp4 |
+
+Extra error codes: 415 wrong image type, 422 `video_processing_failed`, 503 `ffmpeg_missing`.
+The `/images|audio|videos/process` routes stay 501 (reserved for a future AI provider).
