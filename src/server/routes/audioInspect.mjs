@@ -1,5 +1,6 @@
 import { fail } from '../respond.mjs';
 import { inspectWav } from '../../audio/inspectWav.mjs';
+import { analyzeWavPcm16 } from '../../audio/analyzeWavPcm16.mjs';
 
 const PATH = '/api/v1/audio/inspect';
 const MAX = 20 * 1024 * 1024;
@@ -26,7 +27,13 @@ export async function handleAudioInspect(req, res, p) {
   catch { fail(res, 413, 'too_large', 'Audio is larger than 20 MB'); return true; }
   const info = inspectWav(buf);
   if (!info.ok) { fail(res, 400, 'bad_audio', `Not a valid WAV file (${info.reason})`); return true; }
+  const analysis = analyzeWavPcm16(buf);
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify({ ok: true, data: info, error: null }));
+  res.end(JSON.stringify({
+    ok: true,
+    data: info,
+    analysis,
+    error: null,
+  }));
   return true;
 }

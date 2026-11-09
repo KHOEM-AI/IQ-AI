@@ -53,3 +53,6 @@ data/
 *.bak*
 # generated sample sounds: run node scripts/generateSeedSounds.mjs
 sounds/seed/**/*.wav
+
+# C++ native build output
+native/cpp/build/

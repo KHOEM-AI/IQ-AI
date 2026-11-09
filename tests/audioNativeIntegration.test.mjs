@@ -1,0 +1,132 @@
+import test, { before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+import { analyzeWavPcm16 } from '../src/audio/analyzeWavPcm16.mjs';
+import { nativeAvailable } from '../src/native/cppEngine.mjs';
+import { createApp } from '../src/server/server.mjs';
+
+const TOKEN = 'test-token';
+const auth = { Authorization: `Bearer ${TOKEN}` };
+
+function makeWav(samples, { channels = 1, sampleRate = 16000 } = {}) {
+  const pcm = Buffer.alloc(samples.length * 2);
+
+  samples.forEach((sample, index) => {
+    pcm.writeInt16LE(sample, index * 2);
+  });
+
+  const fmt = Buffer.alloc(16);
+  fmt.writeUInt16LE(1, 0);
+  fmt.writeUInt16LE(channels, 2);
+  fmt.writeUInt32LE(sampleRate, 4);
+  fmt.writeUInt32LE(sampleRate * channels * 2, 8);
+  fmt.writeUInt16LE(channels * 2, 12);
+  fmt.writeUInt16LE(16, 14);
+
+  const fmtHeader = Buffer.alloc(8);
+  fmtHeader.write('fmt ', 0);
+  fmtHeader.writeUInt32LE(fmt.length, 4);
+
+  const dataHeader = Buffer.alloc(8);
+  dataHeader.write('data', 0);
+  dataHeader.writeUInt32LE(pcm.length, 4);
+
+  const body = Buffer.concat([
+    Buffer.from('WAVE'),
+    fmtHeader,
+    fmt,
+    dataHeader,
+    pcm,
+  ]);
+
+  const header = Buffer.alloc(8);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(body.length, 4);
+
+  return Buffer.concat([header, body]);
+}
+
+test('analyzes mono PCM16 WAV', () => {
+  const wav = makeWav([-32768, 32767, 0, 16384]);
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, true);
+  assert.equal(result.engine, nativeAvailable ? 'cpp' : 'javascript');
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+  assert.ok(result.rms > 0 && result.rms <= 1);
+});
+
+test('analyzes interleaved stereo PCM16 samples', () => {
+  const wav = makeWav([-32768, 32767, 0, 0], { channels: 2 });
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, true);
+  assert.equal(result.sampleCount, 4);
+  assert.equal(result.peak, 1);
+});
+
+test('does not analyze non-PCM16 WAV', () => {
+  const wav = makeWav([100, 200]);
+  wav.writeUInt16LE(3, 20);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'unsupported_pcm_format');
+});
+
+test('rejects malformed WAV chunk size safely', () => {
+  const wav = makeWav([100, 200]);
+  wav.writeUInt32LE(0xffffffff, 40);
+
+  const result = analyzeWavPcm16(wav);
+
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'invalid_chunk_size');
+});
+
+test('production audio route returns legacy data and native analysis', async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'iqai-native-audio-'));
+  const server = createApp({
+    storageDir: dir,
+    audioStorageDir: path.join(dir, 'audio'),
+    maxUploadBytes: 1000,
+    token: TOKEN,
+    corsOrigin: '',
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  t.after(async () => {
+    server.closeAllConnections();
+    await new Promise((resolve) => server.close(resolve));
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  const wav = makeWav([-32768, 32767, 0, 16384]);
+
+  const response = await fetch(
+    `http://127.0.0.1:${server.address().port}/api/v1/audio/inspect`,
+    {
+      method: 'POST',
+      headers: auth,
+      body: wav,
+    },
+  );
+
+  assert.equal(response.status, 200);
+
+  const json = await response.json();
+  assert.equal(json.ok, true);
+  assert.equal(json.data.ok, true);
+  assert.equal(json.data.audioFormat, 1);
+  assert.equal(json.data.bitsPerSample, 16);
+  assert.equal(json.analysis.available, true);
+  assert.equal(json.analysis.engine, nativeAvailable ? 'cpp' : 'javascript');
+  assert.equal(json.analysis.sampleCount, 4);
+  assert.equal(json.error, null);
+});
