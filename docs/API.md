@@ -95,5 +95,9 @@ Full details in docs/VIDEO.md.
 | POST | /api/v1/videos/photo?effect=&durationSec=&width=&height=&sfx= | Raw image -> mp4 (`X-Applied` header lists applied settings) |
 | POST | /api/v1/videos/text | JSON `{"text",...}` -> mp4 |
 
-Extra error codes: 415 wrong image type, 422 `video_processing_failed`, 503 `ffmpeg_missing`.
+| POST | /api/v1/videos/edit?trimStart=&trimEnd=&speed=&mute=&width=&height= | Raw MP4/WebM -> mp4 (trim, speed, mute, resize) |
+| POST | /api/v1/videos/thumbnail?at=&width= | Raw MP4/WebM -> JPEG frame |
+| POST | /api/v1/videos/audio | Raw MP4/WebM -> WAV (mono 44.1 kHz) |
+
+Extra error codes: 415 wrong image/video type, 400 `bad_video` (cannot be decoded), 422 `video_processing_failed`, 503 `ffmpeg_missing`.
 The `/images|audio|videos/process` routes stay 501 (reserved for a future AI provider).

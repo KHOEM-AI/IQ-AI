@@ -33,3 +33,28 @@ notes this.
 This is intentionally simple and free. For actual generative video (text/image -> AI-generated
 motion), a cloud provider (paid, needs network) or a very large local model (impractical on a
 phone) would be required — out of scope here. These endpoints can stay as a free fallback either way.
+
+## Edit an existing video
+Raw MP4 or WebM in (max 50 MB), ffmpeg only. All routes need the token and ffmpeg.
+
+| Method | Path | Result |
+|---|---|---|
+| POST | /api/v1/videos/edit?trimStart=&trimEnd=&speed=&mute=&width=&height= | mp4 (H.264 + AAC) |
+| POST | /api/v1/videos/thumbnail?at=&width= | JPEG |
+| POST | /api/v1/videos/audio | WAV, mono 44.1 kHz |
+
+`edit` parameters (all optional, combine freely; with none it just re-encodes to H.264/AAC mp4):
+- `trimStart`, `trimEnd` — seconds on the **source** timeline (0..3600, `trimEnd` > `trimStart`).
+- `speed` — 0.5..2 (audio is tempo-adjusted too).
+- `mute` — `true` drops the audio track. A video with no audio simply stays silent.
+- `width`, `height` — 160..1920, rounded to even. Give one and the other keeps the aspect ratio.
+
+`thumbnail`: `at` seconds (default 0), `width` 64..1280 (default 320). `audio` returns 422 when the video has no audio track.
+
+The `X-Applied` response header lists what was applied. Errors: 400 `bad_params`, 400 `bad_video`
+(cannot be decoded; also when `trimStart` is past the end), 415 not MP4/WebM, 422 `video_processing_failed`, 503 `ffmpeg_missing`.
+
+    curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" --data-binary @in.mp4 \
+      "http://localhost:8799/api/v1/videos/edit?trimStart=1&trimEnd=4&speed=1.5&width=480" -o out.mp4
+    curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" --data-binary @in.mp4 \
+      "http://localhost:8799/api/v1/videos/thumbnail?at=2&width=320" -o thumb.jpg

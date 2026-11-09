@@ -1,12 +1,12 @@
 # IQ-AI · ស្ថានភាព និងភាគរយ (Status)
 
-_Updated: 2026-11-09 · based on repo `main` @ `b72e74e` (114 tests)_
+_Updated: 2026-11-10 · based on `main` @ `ec3ad61` + native C++ analyzer + video edit (236 tests)_
 
 ## 🎯 Overall progress
 
-> ### ≈ 53 % of the planned IQ-AI scope
+> ### ≈ 54 % of the planned IQ-AI scope
 >
-> `█████████████░░░░░░░░░░░░` 53 / 100
+> `█████████████░░░░░░░░░░░░` 54 / 100
 
 This is an **estimate**, not a measurement. The weights below are a judgement of how much
 each part matters; change them if your priorities differ and recompute.
@@ -17,12 +17,12 @@ each part matters; change them if your priorities differ and recompute.
 | 2 | Sound library (CRUD, search, edit, favorites) | 15 | 90 % | 13.5 | `/api/v1/sounds*`, `soundEdit` tests |
 | 3 | Real sound content | 15 | 5 % | 0.75 | 209 **synthetic** seed sounds vs 10,000 stage‑1 goal |
 | 4 | Audio tools (voice, edit, sfx) | 10 | 90 % | 9.0 | 22 presets, `audioVoice` tests |
-| 5 | Video (photo/text → mp4, ffmpeg) | 10 | 80 % | 8.0 | `videoGenerate`, `videoFixes` tests |
-| 6 | Emotion + inspect | 5 | 70 % | 3.5 | text only; no audio/image emotion |
+| 5 | Video (photo/text → mp4, edit, thumbnail, ffmpeg) | 10 | 90 % | 9.0 | `videoGenerate`, `videoFixes`, `videoEdit` tests |
+| 6 | Emotion + inspect | 5 | 75 % | 3.75 | text emotion only; audio inspect now adds C++ level analysis |
 | 7 | UI | 10 | 40 % | 4.0 | `public/sound-studio.html`; Create panel lives in `AI` repo |
 | 8 | AI providers (TTS, recognition, generative) | 15 | 0 % | 0 | all `501` |
 | 9 | Jobs, thumbnails, multi-user | 5 | 0 % | 0 | not started |
-| | **Total** | **100** | | **53.0** | |
+| | **Total** | **100** | | **54.25** | |
 
 Reading the number: the **offline, no-AI core is mostly finished (≈ 85–90 %)**.
 What holds the total down is real content (area 3) and AI providers (area 8) — both need
@@ -44,14 +44,17 @@ data or paid/cloud services, not just code.
 | `docs/NOTES.md` is stale in places | still says video "❌ 501"; that is only true for `/videos/process`. Generation is at `/videos/photo` and `/videos/text`. | verified |
 | `docs/API.md` was incomplete | missing video, emotion, inspect, sound CRUD routes — fixed in this update. | fixed |
 | `.bak*` and `IQ-AI-FILES.txt` clutter | `.bak*` is git-ignored; `IQ-AI-FILES.txt` is untracked — delete it or add it to `.gitignore`. | verified |
-| Sound Studio page auth | `public/sound-studio.html` lists sounds without an `Authorization` header, but the server requires one. It presumably works through the Vite `/iqai` proxy that adds the token. | **assumption — not verified** |
+| Sound Studio page auth | `public/sound-studio.html` calls the API without a token for listing. This works because the `AI` Vite proxy `/iqai` adds `Authorization` (`vite.config.ts`). IQ-AI itself has no static file serving, so the page only works behind that proxy. | verified from `vite.config.ts` |
+| `npm test` red on a clean checkout | `audioNativeIntegration.test.mjs` "C++ and JavaScript produce matching PCM16 metrics" asserts the native module is built. Run `npm run build:native` first, or make that test skip when `nativeAvailable` is false. | verified (reproduced) |
+| `docs/NATIVE-CPP.md` is behind the code | It documents PCM16 only, but `src/native/cppEngine.mjs` also exports PCM8/24/32 and float32/64 analyzers. | verified (exports); not tested here |
+| UI not wired to video edit | `AvStudio.tsx` still says editing an existing video is "not connected". The backend exists now (`/videos/edit`, `/thumbnail`, `/audio`); the UI is in the `AI` repo. | open |
 | No `tsconfig`/typecheck | Not needed (plain `.mjs`); only the `AI` repo has `typecheck`. | verified |
 
 ## 🧭 Next steps (suggested order)
 
 1. **Real sounds** — use `scripts/importRealSounds.mjs` (needs `source` + `license` per file); first 100 recordings.
-2. **UI hook** — finish wiring the `AI` UI to emotion, inspect and sound edit endpoints.
-3. **Thumbnails + ogg/mp3/webm duration** (ffmpeg is already a dependency).
+2. **UI hook** — wire the `AI` UI to `/videos/edit`, `/videos/thumbnail`, `/videos/audio`, emotion, inspect and sound edit.
+3. **Image thumbnails + ogg/mp3/webm duration** (video thumbnails are done; ffmpeg is already a dependency).
 4. **TTS** — implement `synthesizeSpeech` in `src/audio/tts/provider.mjs` (one function; contract in [AUDIO.md](AUDIO.md)).
 5. **Jobs + per-user ownership** — only when more than one app/user needs it.
 

@@ -12,6 +12,7 @@ import { handleEmotion } from "./routes/emotion.mjs";
 import { handleImageInspect } from "./routes/imageInspect.mjs";
 import { handleVideoInspect } from "./routes/videoInspect.mjs";
 import { handleVideoGenerate } from "./routes/videoGenerate.mjs";
+import { handleVideoEdit } from "./routes/videoEdit.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
 import { handleAudioInspect } from "./routes/audioInspect.mjs";
 
@@ -71,6 +72,7 @@ export function createApp(config) {
         if (await handleMedia(req, res, p, ctx)) return;
         if (await handleProcess(req, res, p)) return;
         if (await handleVideoGenerate(req, res, p)) return;
+        if (await handleVideoEdit(req, res, p)) return;
         if (await handleEmotion(req, res, p)) return;
         if (await handleImageInspect(req, res, p)) return;
         if (await handleVideoInspect(req, res, p)) return;

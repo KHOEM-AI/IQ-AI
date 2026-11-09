@@ -7,7 +7,7 @@
 Other apps upload, store, edit and fetch audio, image and video over one HTTP API.
 Runs fully offline on a phone (Termux) — no cloud, no cost.
 
-`Node 22+` · `ffmpeg` · `port 8799` · `114 tests`
+`Node 22+` · `ffmpeg` · `port 8799` · `236 tests`
 
 </div>
 
@@ -32,7 +32,7 @@ First time on Termux? See [docs/TERMUX.md](docs/TERMUX.md).
 | 📦 **Media** | upload, list, download (Range), rename, delete, type/size validation, Khmer filenames | [API](docs/API.md) |
 | 🔊 **Sound library** | 10 categories, search, tags, favorites, PATCH edit, 209 synthetic seed sounds | [SOUND_SEED](docs/SOUND_SEED.md) · [TAXONOMY](docs/SOUND_TAXONOMY.md) |
 | 🎙️ **Audio tools** | voice changer (22 presets), edit (trim/fade/denoise/…), generated sfx | [AUDIO](docs/AUDIO.md) |
-| 🎬 **Video** | photo → zoom mp4, Khmer text → mp4, optional sfx (ffmpeg only) | [VIDEO](docs/VIDEO.md) |
+| 🎬 **Video** | photo → zoom mp4, Khmer text → mp4, **edit** (trim/speed/mute/resize), thumbnail, extract audio (ffmpeg only) | [VIDEO](docs/VIDEO.md) |
 | 🧠 **Emotion** | rule-based Khmer text emotion (6 emotions, negation, emoji) | [API](docs/API.md) |
 | 🔍 **Inspect** | read info from audio / image / video files | [API](docs/API.md) |
 | 🔐 **Auth** | bearer token on every route except health | [API](docs/API.md) |
@@ -41,7 +41,7 @@ First time on Termux? See [docs/TERMUX.md](docs/TERMUX.md).
 
 - Real AI providers: TTS (`/audio/tts` → 501), generative image/audio/video (`/…/process` → 501)
 - Real recorded sounds (library is synthetic; goal is 10,000 licensed sounds)
-- Thumbnails, ogg/mp3/webm duration, job queue
+- Image thumbnails, ogg/mp3/webm duration, job queue
 - Per-user ownership (one shared token)
 
 Progress and plan: **[docs/STATUS.md](docs/STATUS.md)**.
