@@ -5,9 +5,11 @@ import {
   analyzePcm16,
   analyzePcm24,
   analyzeFloat32,
+  analyzeFloat64,
   nativeAvailable,
   nativePcm24Available,
   nativeFloat32Available,
+  nativeFloat64Available,
 } from '../src/native/cppEngine.mjs';
 
 test('C++ Native Module is available after build', {
@@ -273,6 +275,89 @@ test("rejects NaN and infinite Float32 samples", {
     assert.throws(
       () => analyzeFloat32(pcm),
       /Float32 samples must be finite/,
+    );
+  }
+});
+
+
+test("C++ Native Float64 Module is available after build", {
+  skip: !nativeFloat64Available,
+}, () => {
+  assert.equal(nativeFloat64Available, true);
+});
+
+test("analyzes Float64 peak, RMS and sample count", {
+  skip: !nativeFloat64Available,
+}, () => {
+  const pcm = Buffer.alloc(40);
+  [-1, -0.5, 0, 0.5, 1].forEach((sample, index) => {
+    pcm.writeDoubleLE(sample, index * 8);
+  });
+
+  const result = analyzeFloat64(pcm);
+  assert.equal(result.sampleCount, 5);
+  assert.equal(result.peak, 1);
+  assert.ok(Math.abs(result.rms - Math.sqrt(0.5)) < 1e-12);
+  assert.equal(result.peakDbfs, 0);
+});
+
+test("handles Float64 silence correctly", {
+  skip: !nativeFloat64Available,
+}, () => {
+  const result = analyzeFloat64(Buffer.alloc(4096));
+  assert.equal(result.sampleCount, 512);
+  assert.equal(result.peak, 0);
+  assert.equal(result.rms, 0);
+  assert.equal(result.peakDbfs, -160);
+  assert.equal(result.rmsDbfs, -160);
+});
+
+test("preserves finite Float64 samples above full scale", {
+  skip: !nativeFloat64Available,
+}, () => {
+  const pcm = Buffer.alloc(16);
+  pcm.writeDoubleLE(2, 0);
+  pcm.writeDoubleLE(-0.5, 8);
+
+  const result = analyzeFloat64(pcm);
+  assert.equal(result.sampleCount, 2);
+  assert.equal(result.peak, 2);
+  assert.ok(result.peakDbfs > 6);
+});
+
+test("rejects incomplete Float64 samples", {
+  skip: !nativeFloat64Available,
+}, () => {
+  assert.throws(() => analyzeFloat64(Buffer.from([1, 2, 3])), TypeError);
+});
+
+test("rejects empty Float64 input", {
+  skip: !nativeFloat64Available,
+}, () => {
+  assert.throws(() => analyzeFloat64(Buffer.alloc(0)), TypeError);
+});
+
+test("rejects non-Buffer Float64 input", {
+  skip: !nativeFloat64Available,
+}, () => {
+  assert.throws(() => analyzeFloat64("not a buffer"), TypeError);
+});
+
+test("rejects extra Float64 arguments", {
+  skip: !nativeFloat64Available,
+}, () => {
+  assert.throws(() => analyzeFloat64(Buffer.alloc(8), "extra"), TypeError);
+});
+
+test("rejects NaN and infinite Float64 samples", {
+  skip: !nativeFloat64Available,
+}, () => {
+  for (const sample of [NaN, Infinity, -Infinity]) {
+    const pcm = Buffer.alloc(8);
+    pcm.writeDoubleLE(sample, 0);
+    assert.throws(
+      () => analyzeFloat64(pcm),
+      /Float64 samples must be finite/,
     );
   }
 });

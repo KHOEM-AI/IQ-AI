@@ -39,6 +39,24 @@ export function analyzeFloat32(buffer) {
   return nativeModule.analyzeFloat32(buffer);
 }
 
+export const nativeFloat64Available =
+  typeof nativeModule?.analyzeFloat64 === "function";
+
+export function analyzeFloat64(buffer) {
+  if (arguments.length !== 1) {
+    throw new TypeError("Expected one Float64 Buffer");
+  }
+  if (!Buffer.isBuffer(buffer)) {
+    throw new TypeError("Input must be a Node.js Buffer");
+  }
+
+  if (!nativeFloat64Available) {
+    throw new Error("cpp_native_float64_not_built");
+  }
+
+  return nativeModule.analyzeFloat64(buffer);
+}
+
 export function analyzePcm16(buffer) {
   if (arguments.length !== 1) {
     throw new TypeError("Expected one PCM16 Buffer");
