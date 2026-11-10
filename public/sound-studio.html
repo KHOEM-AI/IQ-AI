@@ -30,7 +30,7 @@ for(const c of C){$('cat').add(new Option(c,c));$('fc').add(new Option(c,c));}
 $('cat').value='unknown';
 const st=t=>$('st').textContent=t, E=encodeURIComponent;
 async function load(){
-  const r=await fetch('/api/v1/sounds?q='+E($('q').value)+'&category='+$('fc').value);
+  const r=await fetch('/api/v1/sounds?q='+E($('q').value)+'&category='+$('fc').value,{headers:$('tok').value?{authorization:'Bearer '+$('tok').value}:{}});
   const d=await r.json(); $('list').replaceChildren();
   for(const m of d.items){
     const el=document.createElement('div');el.className='card';

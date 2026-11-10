@@ -6,6 +6,8 @@ Responses: `{ "ok": bool, "data": ..., "error": null | { "code", "message" } }`
 | Method | Path | Purpose |
 |---|---|---|
 | GET | /api/v1/health | Service status (public) |
+| GET | /api/v1/capabilities | What is installed (ffmpeg, Khmer font, C++), which features are ready, option lists for the UI |
+| GET | /ui | Sound Studio page (`public/`, no token needed to load; the page asks for one) |
 | POST | /api/v1/media | Upload raw bytes; Content-Type must be the file type |
 | GET | /api/v1/media | List media |
 | GET | /api/v1/media/:id | Metadata |

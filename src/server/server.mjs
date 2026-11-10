@@ -15,6 +15,8 @@ import { handleVideoGenerate } from "./routes/videoGenerate.mjs";
 import { handleVideoEdit } from "./routes/videoEdit.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
 import { handleAudioInspect } from "./routes/audioInspect.mjs";
+import { handleCapabilities } from "./routes/capabilities.mjs";
+import { serveStatic } from "./static.mjs";
 
 function authorized(req, token) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || "");
@@ -60,11 +62,15 @@ export function createApp(config) {
         ok(res, 200, { status: "up" });
         return;
       }
+      if (req.method === "GET" && (p === "/ui" || p.startsWith("/ui/"))) {
+        if (await serveStatic(res, p)) return; // public/ pages, no token (the page asks for one)
+      }
       if (p.startsWith("/api/v1/")) {
         if (!authorized(req, config.token)) {
           fail(res, 401, "unauthorized", "Missing or invalid token");
           return;
         }
+        if (await handleCapabilities(req, res, p, ctx)) return;
         if (await handleAudioVoice(req, res, p)) return;
         if (await handleAudioInspect(req, res, p)) return;
         const audioHandler = await audioHandlerReady;

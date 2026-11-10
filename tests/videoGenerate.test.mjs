@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createApp } from '../src/server/server.mjs';
 import { ffmpegAvailable } from '../src/audio/ffmpeg.mjs';
 import { EFFECTS } from '../src/video/photoToVideo.mjs';
+import { khmerFontAvailable } from '../src/video/textToVideo.mjs';
 
 const TOKEN = 'test-token';
 const auth = { Authorization: `Bearer ${TOKEN}` };
@@ -80,6 +81,7 @@ test('text: bad color -> 400', async (t) => {
 });
 test('text: renders a Khmer-text mp4', async (t) => {
   if (!hasFfmpeg) return t.skip('ffmpeg not installed');
+  if (!khmerFontAvailable()) return t.skip('Khmer font not found (set KHMER_FONT)');
   const r = await fetch(`${base}/api/v1/videos/text`, {
     method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: 'សួស្តី ពិភពលោក', durationSec: 1, width: 320, height: 320 }),
@@ -92,6 +94,7 @@ test('text: renders a Khmer-text mp4', async (t) => {
 }, { timeout: 30000 });
 test('text: with sfx mixes audio in', async (t) => {
   if (!hasFfmpeg) return t.skip('ffmpeg not installed');
+  if (!khmerFontAvailable()) return t.skip('Khmer font not found (set KHMER_FONT)');
   const r = await fetch(`${base}/api/v1/videos/text`, {
     method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: 'test', durationSec: 1, width: 320, height: 320, sfx: 'beep' }),

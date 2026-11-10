@@ -1,10 +1,21 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import { runFfmpegArgs } from './ffmpegRun.mjs';
 import { synthSfx, SFX_TYPES } from '../audio/sfx/synth.mjs';
 
-export const KHMER_FONT = '/system/fonts/NotoSansKhmer-Regular.ttf';
+// Font lookup: $KHMER_FONT first, then common Android/Termux/Linux locations.
+const FONT_CANDIDATES = [
+  process.env.KHMER_FONT,
+  '/system/fonts/NotoSansKhmer-Regular.ttf',
+  '/system/fonts/NotoSansKhmerUI-Regular.ttf',
+  process.env.PREFIX && `${process.env.PREFIX}/share/fonts/NotoSansKhmer-Regular.ttf`,
+  '/usr/share/fonts/truetype/noto/NotoSansKhmer-Regular.ttf',
+  '/usr/share/fonts/noto/NotoSansKhmer-Regular.ttf',
+].filter(Boolean);
+export const KHMER_FONT = FONT_CANDIDATES.find((f) => existsSync(f)) || FONT_CANDIDATES.find(Boolean);
+export const khmerFontAvailable = () => existsSync(KHMER_FONT);
 const LIMITS = { durationSec: [1, 20], side: [320, 1280], fontSize: [16, 120], text: [1, 2000] };
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 

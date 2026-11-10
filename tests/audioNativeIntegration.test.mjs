@@ -138,7 +138,7 @@ test('analyzes interleaved stereo PCM16 samples', () => {
   assert.equal(result.peak, 1);
 });
 
-test("C++ and JavaScript produce matching PCM16 metrics", () => {
+test("C++ and JavaScript produce matching PCM16 metrics", { skip: !nativeAvailable && 'native module not built (npm run build:native)' }, () => {
   const samples = [-32768, 32767, 0, 16384, -16384, 8192, -8192, 1];
   const wav = makeWav(samples);
   assert.equal(nativeAvailable, true, "native C++ module must be built for this comparison");

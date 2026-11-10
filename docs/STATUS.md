@@ -45,9 +45,9 @@ data or paid/cloud services, not just code.
 | `docs/API.md` was incomplete | missing video, emotion, inspect, sound CRUD routes — fixed in this update. | fixed |
 | `.bak*` and `IQ-AI-FILES.txt` clutter | `.bak*` is git-ignored; `IQ-AI-FILES.txt` is untracked — delete it or add it to `.gitignore`. | verified |
 | Sound Studio page auth | `public/sound-studio.html` calls the API without a token for listing. This works because the `AI` Vite proxy `/iqai` adds `Authorization` (`vite.config.ts`). IQ-AI itself has no static file serving, so the page only works behind that proxy. | verified from `vite.config.ts` |
-| `npm test` red on a clean checkout | `audioNativeIntegration.test.mjs` "C++ and JavaScript produce matching PCM16 metrics" asserts the native module is built. Run `npm run build:native` first, or make that test skip when `nativeAvailable` is false. | verified (reproduced) |
+| `npm test` red on a clean checkout | native-module and Khmer-text tests now **skip** when the C++ module / Khmer font is missing. Clean run: 187 pass, 0 fail, 53 skipped. | fixed |
 | `docs/NATIVE-CPP.md` is behind the code | It documents PCM16 only, but `src/native/cppEngine.mjs` also exports PCM8/24/32 and float32/64 analyzers. | verified (exports); not tested here |
-| UI not wired to video edit | `AvStudio.tsx` still says editing an existing video is "not connected". The backend exists now (`/videos/edit`, `/thumbnail`, `/audio`); the UI is in the `AI` repo. | open |
+| UI not wired to video edit | Drop-in client + panel added in `ui-kit/` (see its README). Still has to be copied into the `AI` repo and tested in Vite. | ready to apply |
 | No `tsconfig`/typecheck | Not needed (plain `.mjs`); only the `AI` repo has `typecheck`. | verified |
 
 ## 🧭 Next steps (suggested order)

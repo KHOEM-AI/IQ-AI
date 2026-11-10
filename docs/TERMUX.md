@@ -48,6 +48,7 @@ Never paste the token into chat or commit `.env`.
 | `AUDIO_DATA_DIR` | `./data/audio` | sound library |
 | `MAX_UPLOAD_BYTES` | `52428800` | 50 MB upload limit |
 | `CORS_ORIGIN` | empty | allowed browser origin |
+| `KHMER_FONT` | auto | path to NotoSansKhmer-Regular.ttf (tries `/system/fonts`, `$PREFIX/share/fonts`, `/usr/share/fonts/...`) |
 
 ## 3. Run
 

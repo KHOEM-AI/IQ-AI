@@ -25,7 +25,7 @@
 - ✅ media: upload / list / metadata / download / delete + auth + validation
 - ✅ emotion: `POST /api/v1/emotion/analyze` (rule-based ពីអត្ថបទខ្មែរ ពាក្យគន្លឹះ + emoji)
   ក្នុង `src/emotion/analyze.mjs` និង `src/server/routes/emotion.mjs`
-- ❌ images/audio/videos process នៅ 501 (មិនទាន់មាន provider) — ការបង្កើតវីដេអូ ដោយ ffmpeg មានរួចហើយ៖ docs/VIDEO.md; ស្ថានភាព៖ docs/STATUS.md
+- ❌ `/images|audio|videos/process` នៅ 501 (មិនទាន់មាន provider) ប៉ុណ្ណោះ — ការបង្កើតវីដេអូ ដោយ ffmpeg មានរួចហើយ៖ docs/VIDEO.md; ស្ថានភាព៖ docs/STATUS.md
 - ✅ audio inspect: `POST /api/v1/audio/inspect` (WAV -> ល្បឿនសំណាក ឆានែល រយៈពេល)
 - ✅ image inspect: `POST /api/v1/images/inspect` (PNG/JPEG/GIF/WebP -> ទំហំ ទទឹង កម្ពស់)
 - ❌ emotion ពីសំឡេង/រូបភាព មិនទាន់មាន

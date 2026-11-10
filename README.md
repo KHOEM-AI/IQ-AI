@@ -1,71 +1,53 @@
-<div align="center">
-
 # 🎧 IQ-AI
 
-**Standalone media service — សំឡេង · រូបភាព · វីដេអូ · សញ្ញាអារម្មណ៍**
+សេវា media ឯករាជ្យ៖ **សំឡេង · រូបភាព · វីដេអូ · សញ្ញាអារម្មណ៍**។
+កម្មវិធីផ្សេងៗ upload រក្សា កែ និងទាញយក media តាម HTTP API តែមួយ។
+ដំណើរការ offline ទាំងស្រុងលើទូរស័ព្ទ (Termux) គ្មាន cloud គ្មានថ្លៃ។
 
-Other apps upload, store, edit and fetch audio, image and video over one HTTP API.
-Runs fully offline on a phone (Termux) — no cloud, no cost.
+`Node 22+` · `ffmpeg` · ច្រក `8799` · **240 តេស្តជាប់ (បានរត់លើ Termux)**
 
-`Node 22+` · `ffmpeg` · `port 8799` · `236 tests`
-
-</div>
-
----
-
-## ⚡ Quick start
+## ⚡ ចាប់ផ្តើម
 
 ```bash
+pkg install nodejs git curl ffmpeg
 cd ~/IQ-AI
-cp .env.example .env          # then set IQAI_TOKEN to a long random string
-npm start                     # or: ./ai.sh start
+cp .env.example .env     # ដាក់ IQAI_TOKEN ជាអក្សរវែងចៃដន្យ
+npm start                # ឬ ./ai.sh start
 npm test
-```
-
-Default port is **8799** (8787 is used by another local service).
-First time on Termux? See [docs/TERMUX.md](docs/TERMUX.md).
-
-## ✅ What works today
-
-| Area | Features | Docs |
-|---|---|---|
-| 📦 **Media** | upload, list, download (Range), rename, delete, type/size validation, Khmer filenames | [API](docs/API.md) |
-| 🔊 **Sound library** | 10 categories, search, tags, favorites, PATCH edit, 209 synthetic seed sounds | [SOUND_SEED](docs/SOUND_SEED.md) · [TAXONOMY](docs/SOUND_TAXONOMY.md) |
-| 🎙️ **Audio tools** | voice changer (22 presets), edit (trim/fade/denoise/…), generated sfx | [AUDIO](docs/AUDIO.md) |
-| 🎬 **Video** | photo → zoom mp4, Khmer text → mp4, **edit** (trim/speed/mute/resize), thumbnail, extract audio (ffmpeg only) | [VIDEO](docs/VIDEO.md) |
-| 🧠 **Emotion** | rule-based Khmer text emotion (6 emotions, negation, emoji) | [API](docs/API.md) |
-| 🔍 **Inspect** | read info from audio / image / video files | [API](docs/API.md) |
-| 🔐 **Auth** | bearer token on every route except health | [API](docs/API.md) |
-
-## 🚧 Not done yet
-
-- Real AI providers: TTS (`/audio/tts` → 501), generative image/audio/video (`/…/process` → 501)
-- Real recorded sounds (library is synthetic; goal is 10,000 licensed sounds)
-- Image thumbnails, ogg/mp3/webm duration, job queue
-- Per-user ownership (one shared token)
-
-Progress and plan: **[docs/STATUS.md](docs/STATUS.md)**.
-
-## 🗺️ Where it fits
-
-IQ-AI is one part of KHOEM-AI. The UI (`AI` repo) calls it through the Vite proxy
-`/iqai` → `http://127.0.0.1:8799/api/v1`. See [docs/SYSTEM_MAP.md](docs/SYSTEM_MAP.md).
-
-## 📚 Documentation
-
-| File | Content |
-|---|---|
-| [docs/STATUS.md](docs/STATUS.md) | Progress %, what is done, next steps |
-| [docs/TERMUX.md](docs/TERMUX.md) | Setup, ffmpeg, Khmer font, seed sounds, troubleshooting, push checklist |
-| [docs/API.md](docs/API.md) | Every HTTP route |
-| [docs/AUDIO.md](docs/AUDIO.md) | Voice changer, editing, sfx, TTS hook |
-| [docs/VIDEO.md](docs/VIDEO.md) | Photo/text → video |
-| [docs/SOUND_LIBRARY_PLAN.md](docs/SOUND_LIBRARY_PLAN.md) · [SOUND_TAXONOMY.md](docs/SOUND_TAXONOMY.md) · [SOUND_SEED.md](docs/SOUND_SEED.md) | Sound library plan |
-| [docs/SYSTEM_MAP.md](docs/SYSTEM_MAP.md) | How all KHOEM-AI repos connect |
-| [docs/NOTES.md](docs/NOTES.md) | Developer notes (Khmer) |
-
-## 🔒 Security
-
-- `.env` and `data/` are git-ignored — never commit a token.
-- Set a real `IQAI_TOKEN`; `ai.sh status` warns if it is still the placeholder.
-- Server binds to `127.0.0.1` by default.
+លម្អិត Termux (ពុម្ពអក្សរខ្មែរ, token, troubleshooting)៖ docs/TERMUX.md
+✅ អ្វីដែលដំណើរការហើយ (បានតេស្ត)
+ផ្នែក
+មុខងារ
+📦 Media
+upload, list, download (Range), rename, delete, ពិនិត្យប្រភេទ/ទំហំ, ឈ្មោះឯកសារខ្មែរ
+🔊 បណ្ណាល័យសំឡេង
+ស្វែងរក, tags, favorites, PATCH កែ, seed 209 សំឡេងសំយោគ
+🎙️ Audio
+ប្តូរសំឡេង 22 preset, កែ (trim/fade/reverse/normalize/denoise/removeSilence), បង្កើត sfx
+🎬 Video (ffmpeg)
+រូប→វីដេអូ zoom, អត្ថបទខ្មែរ→វីដេអូ, កែ (trim/speed/mute/resize), thumbnail, ដកសំឡេង
+🧠 Emotion
+វិភាគអារម្មណ៍អត្ថបទខ្មែរតាមច្បាប់ (6 អារម្មណ៍, ពាក្យអវិជ្ជមាន, emoji)
+🔍 Inspect
+អានព័ត៌មាន audio / image / video
+⚙️ C++ native
+វិភាគ peak/RMS សម្រាប់ WAV PCM8/16/24/32 និង float (មាន JS fallback)
+🧭 Capabilities
+GET /api/v1/capabilities ប្រាប់ UI ថា ffmpeg / ពុម្ពអក្សរ / C++ មានអត់ និងមុខងារណាត្រៀមរួច
+🖥️ Sound Studio
+ទំព័រ /ui ពី server ផ្ទាល់
+🔐 សុវត្ថិភាព
+bearer token គ្រប់ route លើកលែង health; bind 127.0.0.1
+API ទាំងអស់៖ docs/API.md · AUDIO · VIDEO
+🔗 ការភ្ជាប់ជាមួយ UI (AI repo)
+Vite proxy /iqai → http://127.0.0.1:8799/api/v1 មានរួចហើយ (បន្ថែម token ឱ្យ)
+ui-kit/iqaiClient.ts (client មានប្រភេទ) និង ui-kit/IqAiStudio.tsx (ផ្ទាំង 5 tab) ត្រៀមរួច
+ជំហាន៖ ui-kit/README.md
+🚧 មិនទាន់ធ្វើ
+ផ្ទាំង IqAiStudio មិនទាន់ដាក់ក្នុង App.tsx (UI នៅប្រើ AvStudio ចាស់) និងមិនទាន់តេស្តក្នុង Vite
+TTS (/audio/tts → 501) និងការបង្កើតដោយ AI (/…/process → 501): ត្រូវការ provider
+សំឡេងពិត (បណ្ណាល័យឥឡូវជាសំយោគ; គោលដៅ 10,000 សំឡេងមានអាជ្ញាបណ្ណ)
+Thumbnail រូបភាព, ពេលវេលា ogg/mp3/webm, job queue, ម្ចាស់ផ្សេងគ្នាច្រើនគណនី
+ស្ថានភាពលម្អិត៖ docs/STATUS.md · ផែនទីប្រព័ន្ធ KHOEM-AI៖ docs/SYSTEM_MAP.md
+🔒 សុវត្ថិភាព
+.env និង data/ ត្រូវបានមិនរុញទៅ GitHub។ កុំដាក់ token ក្នុង chat ឬ commit។
