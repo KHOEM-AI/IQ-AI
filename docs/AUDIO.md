@@ -25,6 +25,26 @@ preset effects, reverse, fades, normalize, volume, limiter.
 
 These are DSP effects, not neural voice cloning. Animal and ghost voices are effect approximations.
 
+## 36 natural voices (male/female x 9 ages/roles x soft/firm)
+Ids look like `male_uncle_soft`, `female_young_firm` (list: `GET /api/v1/audio/voices`, entries with `natural: true`).
+Roles: little child, child, nephew/niece, younger brother/sister, young man/woman, older brother/sister,
+middle-aged, uncle/aunt (ពូ/មីង), grandfather/grandmother (តា/យាយ).
+
+Each voice aims at its own absolute pitch (`f0`) and vocal-tract size (`formant`), so the result does not depend on who
+recorded the input. The pitch of the input is measured automatically (`sourceF0` can be passed to skip that).
+Pitch is moved with ffmpeg `rubberband` (voice keeps its natural tone); without it, it falls back to the older
+`asetrate` method (less natural). Best input: one clear voice, no music/noise, 2+ seconds.
+
+    # one recording in -> 36 files out (voices36/01_male_toddler_soft.wav ... + index.json)
+    node scripts/voiceAll.mjs my-voice.wav voices36
+    # or a single voice
+    curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" --data-binary @in.wav \
+      "http://localhost:8799/api/v1/audio/voice?preset=female_uncle_firm" -o out.wav
+
+Limits: these are DSP transformations of ONE recording, so pronunciation and rhythm stay the speaker's own. Shifts
+larger than ~12 semitones (e.g. a low male voice -> little girl) sound less natural. Truly independent speakers need a
+text-to-speech provider (`src/audio/tts/provider.mjs`), which is still not connected.
+
 ## Sound effects (generated, no model needed)
 engine, horn, siren, beep, wind, rain, hammer, drill. `durationSec` 0.1..30, optional `seed`.
 Your own library of recorded sounds stays under `/api/v1/sounds`.
