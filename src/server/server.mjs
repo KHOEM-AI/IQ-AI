@@ -13,6 +13,7 @@ import { handleImageInspect } from "./routes/imageInspect.mjs";
 import { handleVideoInspect } from "./routes/videoInspect.mjs";
 import { handleVideoGenerate } from "./routes/videoGenerate.mjs";
 import { handleVideoEdit } from "./routes/videoEdit.mjs";
+import { handleVideoMerge } from "./routes/videoMerge.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
 import { handleAudioInspect } from "./routes/audioInspect.mjs";
 import { handleCapabilities } from "./routes/capabilities.mjs";
@@ -79,6 +80,7 @@ export function createApp(config) {
         if (await handleProcess(req, res, p)) return;
         if (await handleVideoGenerate(req, res, p)) return;
         if (await handleVideoEdit(req, res, p)) return;
+        if (await handleVideoMerge(req, res, p, ctx)) return;
         if (await handleEmotion(req, res, p)) return;
         if (await handleImageInspect(req, res, p)) return;
         if (await handleVideoInspect(req, res, p)) return;
