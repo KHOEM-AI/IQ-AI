@@ -5,7 +5,7 @@ import { runFfmpegArgs } from './ffmpegRun.mjs';
 import { synthSfx, SFX_TYPES } from '../audio/sfx/synth.mjs';
 
 export const EFFECTS = ['zoom-in', 'zoom-out'];
-const LIMITS = { durationSec: [1, 20], side: [320, 1280] };
+const LIMITS = { durationSec: [1, 120], side: [320, 1280] };
 
 function clampNum(v, def, [lo, hi]) {
   if (v === undefined || v === null || v === '') return { ok: true, value: def };
@@ -37,6 +37,7 @@ export async function renderPhotoVideo({ imageBuf, effect = 'zoom-in', durationS
   const w = evenSize(w0.value);
   const h = evenSize(h0.value);
   const fps = 25;
+  const ffTimeout = 120000 + Math.round(dur.value * 3000);
 
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'iqai-pv-'));
   try {
@@ -53,19 +54,19 @@ export async function renderPhotoVideo({ imageBuf, effect = 'zoom-in', durationS
       '-nostdin', '-v', 'error', '-y', '-loop', '1', '-i', inImg,
       '-vf', vf, '-t', String(dur.value), '-r', String(fps),
       '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-f', 'mp4', silentMp4,
-    ]);
+    ], { timeoutMs: ffTimeout });
 
     let finalPath = silentMp4;
     if (sfxType) {
-      const sfx = synthSfx({ type: sfxType, durationSec: dur.value });
+      const sfx = synthSfx({ type: sfxType, durationSec: Math.min(dur.value, 20) });
       if (!sfx.ok) return sfx;
       const wavPath = path.join(dir, 'sfx.wav');
       await fs.writeFile(wavPath, sfx.buf);
       const muxed = path.join(dir, 'out.mp4');
       await runFfmpegArgs([
-        '-nostdin', '-v', 'error', '-y', '-i', silentMp4, '-i', wavPath,
-        '-c:v', 'copy', '-c:a', 'aac', '-shortest', '-f', 'mp4', muxed,
-      ]);
+        '-nostdin', '-v', 'error', '-y', '-i', silentMp4, '-stream_loop', '-1', '-i', wavPath,
+        '-c:v', 'copy', '-c:a', 'aac', '-t', String(dur.value), '-shortest', '-f', 'mp4', muxed,
+      ], { timeoutMs: ffTimeout });
       finalPath = muxed;
     }
     const buf = await fs.readFile(finalPath);
