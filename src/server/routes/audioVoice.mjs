@@ -27,7 +27,10 @@ async function jsonBody(req) {
 export async function handleAudioVoice(req, res, p) {
   if (p === '/api/v1/audio/voices') {
     if (req.method !== 'GET') { fail(res, 405, 'method_not_allowed', 'Method not allowed'); return true; }
-    const presets = Object.entries(PRESETS).map(([id, v]) => ({ id, label: v.label, pitch: v.pitch, speed: v.speed }));
+    const presets = Object.entries(PRESETS).map(([id, v]) => ({
+      id, label: v.label, pitch: v.pitch, speed: v.speed,
+      ...(v.natural ? { natural: true, f0: v.f0, formant: v.formant } : {}),
+    }));
     ok(res, 200, { presets, limits: LIMITS, editOptions: EDIT_OPTIONS, note: 'DSP effects (pitch/tempo/filters), not neural voice cloning' });
     return true;
   }
@@ -41,7 +44,7 @@ export async function handleAudioVoice(req, res, p) {
     if (!AUDIO_MIMES.has(sniffMime(buf))) { fail(res, 415, 'unsupported_type', 'Body must be WAV, OGG or MP3 audio'); return true; }
     try {
       const opts = {};
-      for (const k of ['preset', 'pitch', 'speed', 'volume', 'trimStart', 'trimEnd', 'fadeIn', 'fadeOut', 'reverse', 'normalize', 'denoise', 'removeSilence']) {
+      for (const k of ['preset', 'pitch', 'speed', 'volume', 'trimStart', 'trimEnd', 'fadeIn', 'fadeOut', 'reverse', 'normalize', 'denoise', 'removeSilence', 'sourceF0']) {
         if (q.has(k)) opts[k] = q.get(k);
       }
       const r = await changeVoice(buf, opts);

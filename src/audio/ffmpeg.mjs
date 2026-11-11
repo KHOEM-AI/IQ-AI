@@ -15,6 +15,23 @@ export function ffmpegAvailable() {
   return available;
 }
 
+const filterCache = new Map();
+
+// true if this ffmpeg build has the filter (e.g. 'rubberband' - formant-safe pitch shifting).
+export function ffmpegHasFilter(name) {
+  if (!/^[a-z0-9_]+$/i.test(name)) return Promise.resolve(false);
+  if (!filterCache.has(name)) {
+    filterCache.set(name, new Promise((resolve) => {
+      const p = spawn('ffmpeg', ['-hide_banner', '-filters'], { stdio: ['ignore', 'pipe', 'ignore'] });
+      let out = '';
+      p.stdout.on('data', (d) => { if (out.length < 200000) out += d; });
+      p.on('error', () => resolve(false));
+      p.on('exit', () => resolve(new RegExp(`\\s${name}\\s`).test(out)));
+    }));
+  }
+  return filterCache.get(name);
+}
+
 // Runs ffmpeg with an args array (no shell). Input/output go through a temp dir
 // (os.tmpdir() honours TMPDIR, which is $PREFIX/tmp on Termux).
 export async function runFfmpeg(inputBuf, filterArgs, { timeoutMs = 60000 } = {}) {

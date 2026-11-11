@@ -1,5 +1,6 @@
 import { PRESETS, LIMITS } from './presets.mjs';
-import { runFfmpeg } from '../ffmpeg.mjs';
+import { runFfmpeg, ffmpegHasFilter } from '../ffmpeg.mjs';
+import { estimateF0 } from './estimatePitch.mjs';
 
 const SR = 44100;
 
@@ -25,14 +26,30 @@ function bool(v) {
   return { ok: false };
 }
 
+// Natural voices (presets with f0): the input voice is assumed male below this pitch, female above.
+const FEMALE_F0 = 165;
+const FEMALE_FORMANT = 3;
+const NATURAL_PITCH_LIMIT = 24; // two octaves; beyond ~12 semitones the result gets less natural
+const SOURCE_F0 = [50, 600];
+
 // Returns { ok, filters, applied } or { ok:false, message }.
+// o.sourceF0 = measured pitch of the input (Hz) and o.hasRubberband = false (ffmpeg without rubberband) are
+// set by changeVoice; presets with f0 use them to aim at their own absolute pitch and vocal-tract size.
 export function buildVoicePlan(o = {}) {
   let base = { pitch: 0, speed: 1, fx: [] };
   if (o.preset) {
     if (!Object.hasOwn(PRESETS, o.preset)) return { ok: false, message: `Unknown preset "${o.preset}"` };
     base = PRESETS[o.preset];
   }
-  const p = num(o.pitch, LIMITS.pitch, base.pitch);
+  const sf = num(o.sourceF0, SOURCE_F0, null);
+  if (!sf.ok) return { ok: false, message: `sourceF0 must be ${SOURCE_F0[0]}..${SOURCE_F0[1]} Hz` };
+  const natural = base.f0 !== undefined && sf.value !== null && blank(o.pitch);
+  const srcFormant = sf.value !== null && sf.value >= FEMALE_F0 ? FEMALE_FORMANT : 0;
+  const natPitch = natural
+    ? Math.max(-NATURAL_PITCH_LIMIT, Math.min(NATURAL_PITCH_LIMIT, 12 * Math.log2(base.f0 / sf.value)))
+    : null;
+  const formant = natural ? base.formant - srcFormant : 0;
+  const p = natural ? { ok: true, value: Math.round(natPitch * 100) / 100 } : num(o.pitch, LIMITS.pitch, base.pitch);
   const s = num(o.speed, LIMITS.speed, base.speed);
   const v = num(o.volume, LIMITS.volume, 1);
   const ts = num(o.trimStart, [0, 3600], 0);
@@ -54,7 +71,13 @@ export function buildVoicePlan(o = {}) {
   }
   if (den.value) f.push('afftdn=nf=-25');
   if (sil.value) f.push('silenceremove=start_periods=1:start_threshold=-50dB');
-  if (p.value !== 0) {
+  const rubber = natural && o.hasRubberband !== false;
+  if (rubber) {
+    // 1) move pitch and vocal tract together by the formant shift, 2) fix the pitch with the tract kept as is
+    if (Math.abs(formant) > 0.05) f.push(`rubberband=pitch=${(2 ** (formant / 12)).toFixed(5)}:formant=shifted`);
+    const rest = p.value - formant;
+    if (Math.abs(rest) > 0.05) f.push(`rubberband=pitch=${(2 ** (rest / 12)).toFixed(5)}:formant=preserved`);
+  } else if (p.value !== 0) {
     const r = 2 ** (p.value / 12);
     f.push(`asetrate=${Math.round(SR * r)}`, `aresample=${SR}`, ...tempoChain(1 / r));
   }
@@ -73,12 +96,24 @@ export function buildVoicePlan(o = {}) {
       preset: o.preset || null, pitch: p.value, speed: s.value, volume: v.value,
       trimStart: ts.value, trimEnd: te.value, fadeIn: fi.value, fadeOut: fo.value,
       reverse: rev.value, normalize: nor.value, denoise: den.value, removeSilence: sil.value,
+      ...(natural ? { sourceF0: Math.round(sf.value), targetF0: base.f0, formantShift: Math.round(formant * 10) / 10, engine: rubber ? 'rubberband' : 'asetrate' } : {}),
     },
   };
 }
 
-export async function changeVoice(buf, options) {
-  const plan = buildVoicePlan(options);
+export async function changeVoice(buf, options = {}) {
+  const opts = { ...options };
+  const preset = opts.preset && Object.hasOwn(PRESETS, opts.preset) ? PRESETS[opts.preset] : null;
+  if (preset && preset.f0 !== undefined) {
+    if (blank(opts.sourceF0) && blank(opts.pitch)) {
+      // measure the input voice once (callers that make many voices can pass sourceF0 themselves)
+      const probe = await runFfmpeg(buf, ['-af', 'aresample=44100']);
+      const hz = estimateF0(probe);
+      if (hz) opts.sourceF0 = Math.round(hz * 10) / 10;
+    }
+    opts.hasRubberband = await ffmpegHasFilter('rubberband');
+  }
+  const plan = buildVoicePlan(opts);
   if (!plan.ok) return plan;
   const out = await runFfmpeg(buf, ['-af', plan.filters.join(',')]);
   return { ok: true, buf: out, applied: plan.applied };
