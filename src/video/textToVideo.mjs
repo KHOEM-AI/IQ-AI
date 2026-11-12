@@ -16,7 +16,7 @@ const FONT_CANDIDATES = [
 ].filter(Boolean);
 export const KHMER_FONT = FONT_CANDIDATES.find((f) => existsSync(f)) || FONT_CANDIDATES.find(Boolean);
 export const khmerFontAvailable = () => existsSync(KHMER_FONT);
-const LIMITS = { durationSec: [1, 1800], side: [320, 1280], fontSize: [16, 120], text: [1, 2000] };
+const LIMITS = { durationSec: [1, 5400], side: [320, 1280], fontSize: [16, 120], text: [1, 2000] };
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 function clampNum(v, def, [lo, hi]) {
@@ -90,7 +90,7 @@ export async function renderTextVideo({
   const w = evenSize(w0.value);
   const h = evenSize(h0.value);
   const fontSizePx = Math.round(fs0.value);
-  const fps = dur.value > 20 ? 5 : 25; // static text: low fps keeps long videos fast
+  const fps = dur.value > 600 ? 2 : dur.value > 20 ? 5 : 25; // static text: low fps keeps long videos fast
   const ffTimeout = 120000 + Math.round(dur.value * 500);
 
   const margin = Math.round(w * 0.08);
@@ -110,7 +110,7 @@ export async function renderTextVideo({
     const lineSpacing = Math.round(fontSizePx * 0.3);
     const vf = `drawtext=fontfile=${KHMER_FONT}:textfile=${txtPath}:expansion=none:fontcolor=${textColor}:fontsize=${fontSizePx}:line_spacing=${lineSpacing}:x=(w-text_w)/2:y=(h-text_h)/2`;
     await runFfmpegArgs([
-      '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', `color=c=${bgColor}:s=${w}x${h}:d=${dur.value}`,
+      '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', `color=c=${bgColor}:s=${w}x${h}:r=${fps}:d=${dur.value}`,
       '-vf', vf, '-r', String(fps), '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-f', 'mp4', silentMp4,
     ], { timeoutMs: ffTimeout });
 
