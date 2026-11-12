@@ -26,7 +26,7 @@ async function canDecode(args) {
 
 // clips: Buffer[] (MP4/WebM bytes). width/height default to `defaultSize` (usually the first clip).
 // Returns { ok, buf (mp4), applied } or { ok:false, message, code }.
-export async function renderMerge({ clips, width, height, fps, defaultSize } = {}) {
+export async function renderMerge({ clips, width, height, fps, defaultSize, signal } = {}) {
   if (!Array.isArray(clips) || clips.length < MERGE_LIMITS.clips[0] || clips.length > MERGE_LIMITS.clips[1]) {
     return bad(`merge needs ${MERGE_LIMITS.clips[0]}..${MERGE_LIMITS.clips[1]} clips`);
   }
@@ -65,7 +65,7 @@ export async function renderMerge({ clips, width, height, fps, defaultSize } = {
       }
       args.push('-vf', vf, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p',
         '-c:a', 'aac', '-ar', '44100', '-ac', '2', '-movflags', '+faststart', '-f', 'mp4', out);
-      await runFfmpegArgs(args, { timeoutMs: 120000 + Math.round(clips[i].length / 1024 / 1024) * 4000 });
+      await runFfmpegArgs(args, { timeoutMs: 120000 + Math.round(clips[i].length / 1024 / 1024) * 4000, signal });
       parts.push(out);
     }
 
@@ -73,7 +73,7 @@ export async function renderMerge({ clips, width, height, fps, defaultSize } = {
     await fs.writeFile(list, parts.map((p) => `file '${p.replace(/'/g, "'\\''")}'`).join('\n'), 'utf8');
     const merged = path.join(dir, 'merged.mp4');
     await runFfmpegArgs(['-nostdin', '-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list,
-      '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4', merged], { timeoutMs: 120000 });
+      '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4', merged], { timeoutMs: 120000, signal });
     const buf = await fs.readFile(merged);
     return {
       ok: true,

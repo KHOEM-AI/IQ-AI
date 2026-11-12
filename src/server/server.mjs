@@ -14,6 +14,9 @@ import { handleVideoInspect } from "./routes/videoInspect.mjs";
 import { handleVideoGenerate } from "./routes/videoGenerate.mjs";
 import { handleVideoEdit } from "./routes/videoEdit.mjs";
 import { handleVideoMerge } from "./routes/videoMerge.mjs";
+import { handleJobs } from "./routes/jobs.mjs";
+import { createJobManager } from "../jobs/jobManager.mjs";
+import { createHandlers } from "../jobs/handlers.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
 import { handleAudioInspect } from "./routes/audioInspect.mjs";
 import { handleCapabilities } from "./routes/capabilities.mjs";
@@ -31,13 +34,21 @@ export function createApp(config) {
   if (!config.token) throw new Error("IQAI_TOKEN is required");
   const registry = createRegistry(createStorage(config.storageDir));
   const ctx = { config, registry };
+  // Background jobs. Persisted only when config.jobsDir is set (loadConfig sets ./data/jobs).
+  ctx.jobs = createJobManager({
+    handlers: createHandlers({ registry }),
+    dir: config.jobsDir || undefined,
+    concurrency: config.jobsConcurrency || 1,
+    maxQueue: config.jobsMaxQueue || 20,
+    ttlMs: (config.jobsTtlHours || 24) * 3600 * 1000,
+  });
   const audioHandlerReady = createAudioHandler({
     dataDir: config.audioStorageDir || "./data/audio",
     token: config.token,
     maxBytes: config.maxUploadBytes,
   });
 
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     try {
       if (config.corsOrigin) {
         res.setHeader("Access-Control-Allow-Origin", config.corsOrigin);
@@ -77,6 +88,8 @@ export function createApp(config) {
         const audioHandler = await audioHandlerReady;
         if (await audioHandler(req, res)) return;
         if (await handleMedia(req, res, p, ctx)) return;
+        // before handleProcess: its old /jobs/:id stub would otherwise answer 404 for real jobs
+        if (await handleJobs(req, res, p, ctx)) return;
         if (await handleProcess(req, res, p)) return;
         if (await handleVideoGenerate(req, res, p)) return;
         if (await handleVideoEdit(req, res, p)) return;
@@ -97,6 +110,8 @@ export function createApp(config) {
       if (!res.headersSent) fail(res, 500, "internal_error", "Internal error");
     }
   });
+  server.on("close", () => { ctx.jobs.close().catch(() => {}); }); // stop running ffmpeg + timers
+  return server;
 }
 
 const isMain =
