@@ -56,3 +56,5 @@ sounds/seed/**/*.wav
 
 # C++ native build output
 native/cpp/build/
+test.mp4
+slide.mp4
