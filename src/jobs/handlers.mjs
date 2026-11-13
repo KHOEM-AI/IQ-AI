@@ -3,6 +3,9 @@ import { renderMerge, MERGE_LIMITS } from '../video/mergeVideos.mjs';
 import { renderMix } from '../video/mixAudio.mjs';
 import { renderSubtitles } from '../video/subtitles.mjs';
 import { renderStory, STORY_LIMITS } from '../video/story.mjs';
+import { buildNarrationTrack, wavSeconds, NARRATION_LEAD_SEC, NARRATION_TAIL_SEC } from '../video/narration.mjs';
+import { synthesizeDialogue } from '../audio/dialogue.mjs';
+import { synthSfx } from '../audio/sfx/synth.mjs';
 import { isValidId } from '../media/registry.mjs';
 
 // Job handlers: they reuse the existing renderers (no duplicated logic) and store the finished video in
@@ -56,7 +59,8 @@ async function saveVideo(registry, buf, filename) {
 }
 
 // ctx: { registry }
-export function createHandlers({ registry }) {
+// tts: { synthesizeDialogue } (injected in tests; the real engine is off until IQAI_TTS=edge)
+export function createHandlers({ registry, tts = { synthesizeDialogue } }) {
   return {
     // params: { mediaId, trimStart?, trimEnd?, speed?, mute?, width?, height? }
     async 'video.edit'({ params, signal, setProgress }) {
@@ -122,32 +126,85 @@ export function createHandlers({ registry }) {
       return { ...(await saveVideo(registry, r.buf, 'subtitled.mp4')), applied: r.applied };
     },
 
-    // params: { scenes: [{ imageId?, text?, seconds? }, ...], secondsPerScene?, width?, height?, effect?, transition?,
-    //           fontSize?, textColor?, bgColor?, sfx?, audioId? }  (same rules as POST /videos/story)
-    // Progress moves after every scene. A scene is a stored photo (optional caption) or a text card.
+    // params: { scenes: [{ imageId?, text?, seconds?, say?, voice? }, ...], voice?, secondsPerScene?, width?, height?, effect?,
+    //           transition?, fontSize?, textColor?, bgColor?, sfx?, audioId?, narrationVolume?, musicVolume?, duck? }
+    // A scene is a stored photo (optional caption) or a text card. `say` is spoken (text-to-speech) by `voice`:
+    // the scene lasts at least as long as its line. Sound effect / stored audio then plays as music under the voice.
     async 'video.story'({ params, signal, setProgress }) {
       const [min, max] = STORY_LIMITS.scenes;
+      const [smin, smax] = STORY_LIMITS.sceneSeconds;
       const raw = params.scenes;
       if (!Array.isArray(raw) || raw.length < min || raw.length > max || !raw.every((s) => s && typeof s === 'object' && !Array.isArray(s))) {
         throw jobError(`scenes must be an array of ${min}..${max} objects`);
       }
+      const base = params.secondsPerScene === undefined || params.secondsPerScene === null ? 4 : Number(params.secondsPerScene);
+      if (!Number.isFinite(base) || base < smin || base > smax) throw jobError(`secondsPerScene must be ${smin}..${smax}`);
+      const aborted = () => Object.assign(new Error('aborted'), { code: 'aborted' });
       const scenes = [];
+      const says = [];
       let bytes = 0;
-      for (const s of raw) {
+      for (let i = 0; i < raw.length; i++) {
+        const s = raw[i];
         const image = s.imageId ? await loadImage(registry, s.imageId) : null;
         if (image) bytes += image.length;
         if (bytes > MAX_JOB_VIDEO) throw jobError('the photos are too large together', 'too_large');
-        scenes.push({ image, text: s.text, seconds: s.seconds });
+        const sec = s.seconds === undefined || s.seconds === null ? base : Number(s.seconds);
+        if (!Number.isFinite(sec) || sec < smin || sec > smax) throw jobError(`scene ${i + 1}: seconds must be ${smin}..${smax}`);
+        const say = typeof s.say === 'string' && s.say.trim() ? s.say.trim() : null;
+        scenes.push({ image, text: s.text, seconds: sec });
+        says.push(say ? { text: say, voice: typeof s.voice === 'string' && s.voice ? s.voice : (typeof params.voice === 'string' && params.voice ? params.voice : 'male') } : null);
       }
       const audioBuf = params.audioId ? await loadAudio(registry, params.audioId, 'audioId') : null;
+      const voiced = says.some(Boolean);
       setProgress(0.02);
+
+      // 1) speak the lines; a scene lasts at least as long as its line (+ a short lead and tail)
+      const clips = [];
+      if (voiced) {
+        let spoken = 0;
+        const total = says.filter(Boolean).length;
+        for (let i = 0; i < scenes.length; i++) {
+          if (!says[i]) { clips.push({ buf: null, seconds: scenes[i].seconds }); continue; }
+          if (signal && signal.aborted) throw aborted();
+          const r = await tts.synthesizeDialogue({ lines: [{ text: says[i].text, voice: says[i].voice }] });
+          if (!r || !r.ok) throw jobError((r && r.message) || 'Text-to-speech failed', (r && r.code) || 'tts_failed');
+          let len = wavSeconds(r.buf);
+          if (len === null && Array.isArray(r.timings) && r.timings.length) len = r.timings[r.timings.length - 1].endMs / 1000;
+          if (!Number.isFinite(len) || len <= 0) throw jobError(`scene ${i + 1}: the speech could not be read`, 'tts_failed');
+          const need = Math.ceil((len + NARRATION_LEAD_SEC + NARRATION_TAIL_SEC) * 10) / 10;
+          const seconds = Math.max(scenes[i].seconds, need);
+          if (seconds > smax) throw jobError(`scene ${i + 1}: the spoken text is too long for one scene (max ${smax} s)`);
+          scenes[i].seconds = seconds;
+          clips.push({ buf: r.buf, seconds });
+          spoken++;
+          setProgress(0.02 + 0.2 * (spoken / total));
+        }
+      }
+
+      // 2) the picture
       const r = check(await renderStory({
-        scenes, secondsPerScene: params.secondsPerScene, width: params.width, height: params.height,
+        scenes, secondsPerScene: base, width: params.width, height: params.height,
         effect: params.effect, transition: params.transition, fontSize: params.fontSize,
-        textColor: params.textColor, bgColor: params.bgColor, sfxType: params.sfx ?? null, audioBuf,
-        signal, onProgress: setProgress,
+        textColor: params.textColor, bgColor: params.bgColor,
+        sfxType: voiced ? null : (params.sfx ?? null), audioBuf: voiced ? null : audioBuf,
+        signal, onProgress: (v) => setProgress(voiced ? 0.22 + 0.68 * v : v),
       }), 'Could not create this story');
-      return { ...(await saveVideo(registry, r.buf, 'story.mp4')), applied: r.applied };
+      if (!voiced) return { ...(await saveVideo(registry, r.buf, 'story.mp4')), applied: r.applied };
+
+      // 3) the voice (and music) on top
+      const narrationBuf = await buildNarrationTrack({ clips, signal });
+      let musicBuf = audioBuf || undefined;
+      if (!musicBuf && params.sfx) {
+        const sfx = synthSfx({ type: params.sfx, durationSec: Math.min(r.applied.totalSec, 60) });
+        if (!sfx.ok) throw jobError(sfx.message || 'sfx failed');
+        musicBuf = sfx.buf;
+      }
+      setProgress(0.93);
+      const mixed = check(await renderMix({
+        videoBuf: r.buf, narrationBuf, musicBuf, signal, originalVolume: 0,
+        narrationVolume: params.narrationVolume, musicVolume: params.musicVolume, duck: params.duck,
+      }), 'Could not add the voice to this story');
+      return { ...(await saveVideo(registry, mixed.buf, 'story.mp4')), applied: { ...r.applied, narrated: says.filter(Boolean).length } };
     },
   };
 }

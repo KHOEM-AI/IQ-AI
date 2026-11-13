@@ -64,3 +64,8 @@ Add an `async ({ params, signal, setProgress }) => result` to `src/jobs/handlers
 
 ## Not done yet
 Per-frame progress, resuming after a restart, a job screen in the AI app.
+
+## Narrated story (`video.story`)
+`params`: `scenes:[{imageId?,text?,seconds?,say?,voice?}]`, optional `voice` (default narrator), `secondsPerScene`, `width`, `height`, `effect`, `transition`, `fontSize`, `textColor`, `bgColor`, `sfx`, `audioId`, `narrationVolume`, `musicVolume`, `duck`.
+- A scene is a stored photo (optional caption) or a text card. `say` is spoken by `voice` (a voice id from `GET /audio/voices`); the scene lasts at least as long as its line (+0.3 s lead, +0.8 s tail, max 60 s per scene).
+- With any `say`, `sfx` / `audioId` plays as music under the voice (ducked while speaking). The speech engine is off until `IQAI_TTS=edge` (needs internet); without it the job fails with the message "No text-to-speech provider is configured yet".
