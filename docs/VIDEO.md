@@ -64,3 +64,21 @@ The `X-Applied` response header lists what was applied. Errors: 400 `bad_params`
 - A scene is a stored photo (with an optional caption) or a text card. 1..30 scenes, 1..60 s each, 900 s in total.
 - `transition` `fade` fades each scene in and out through black. One sound (`sfx`, or a stored `audioId` that is looped) plays under the whole video with a fade in/out.
 - Errors: 400 `bad_params`/`bad_image`/`bad_audio`/`too_long`, 404, 413, 415, 422 `video_processing_failed`, 503 `ffmpeg_missing`/`font_missing`.
+## Merge stored videos
+Join videos you already uploaded to the media library (`POST /api/v1/media`) into one mp4, in the order given.
+ffmpeg only. Needs the token and ffmpeg.
+
+| Method | Path | Body | Result |
+|---|---|---|---|
+| POST | /api/v1/videos/merge | JSON `{"ids":["<media id>", ...], "width"?, "height"?, "fps"?}` | mp4 (H.264 + AAC) |
+
+- 2..20 clips, at most 150 MB in total. Every id must be a stored **video** (MP4 or WebM).
+- Size defaults to the first clip's; clips with another shape are letterboxed (not stretched). `width`/`height` 160..1920, `fps` 10..60 (default 25).
+- Clips without audio get silence of their own length, so clips with and without sound can be mixed. The result always has an audio track.
+- `X-Applied` lists `clips`, `width`, `height`, `fps`, `clipsWithAudio`, `silentClips`.
+- Errors: 400 `bad_params` / `bad_video` (a clip cannot be decoded), 404 unknown id, 413 too large, 415 not a video, 422 `video_processing_failed`, 503 `ffmpeg_missing`.
+
+This is editing, not AI generation: it only joins clips that already exist.
+
+    curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" -H "Content-Type: application/json" \
+      -d '{"ids":["<id1>","<id2>"]}' http://localhost:8799/api/v1/videos/merge -o film.mp4

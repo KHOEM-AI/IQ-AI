@@ -31,7 +31,7 @@ async function canDecode(args) {
 }
 
 // videoBuf: MP4/WebM bytes. Returns { ok, buf (mp4), applied } or { ok:false, message, code }.
-export async function renderVideoEdit({ videoBuf, trimStart, trimEnd, speed, mute, width, height } = {}) {
+export async function renderVideoEdit({ videoBuf, trimStart, trimEnd, speed, mute, width, height, signal, timeoutMs } = {}) {
   const ts = parseNum(trimStart, LIMITS.time);
   const te = parseNum(trimEnd, LIMITS.time);
   const sp = parseNum(speed, LIMITS.speed);
@@ -79,7 +79,7 @@ export async function renderVideoEdit({ videoBuf, trimStart, trimEnd, speed, mut
     }
     const out = path.join(dir, 'out.mp4');
     args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-f', 'mp4', out);
-    await runFfmpegArgs(args);
+    await runFfmpegArgs(args, { signal, ...(timeoutMs ? { timeoutMs } : {}) });
 
     // ffmpeg exits 0 with a header-only mp4 when trimStart is past the end, so check a frame really exists.
     if (!(await canDecode(['-nostdin', '-v', 'error', '-i', out, '-map', '0:v:0', '-frames:v', '1', '-f', 'null', '-']))) {

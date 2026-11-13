@@ -103,3 +103,6 @@ Full details in docs/VIDEO.md.
 
 Extra error codes: 415 wrong image/video type, 400 `bad_video` (cannot be decoded), 422 `video_processing_failed`, 503 `ffmpeg_missing`.
 The `/images|audio|videos/process` routes stay 501 (reserved for a future AI provider).
+
+## Background jobs
+`POST/GET /api/v1/jobs`, `GET/DELETE /api/v1/jobs/:id` run `video.edit` and `video.merge` in the background (queue, cancel, survives restart). See [JOBS.md](JOBS.md).

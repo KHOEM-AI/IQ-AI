@@ -32,6 +32,7 @@ export async function handleCapabilities(req, res, p, ctx) {
       videoPhoto: feat(ffmpeg, ['ffmpeg']),
       videoText: feat(ffmpeg && font, [!ffmpeg && 'ffmpeg', !font && 'khmerFont'].filter(Boolean)),
       videoEdit: feat(ffmpeg, ['ffmpeg']),
+      videoMerge: feat(ffmpeg, ['ffmpeg']),
       tts: feat(false, ['provider']),
       aiGenerate: feat(false, ['provider']),
     },
