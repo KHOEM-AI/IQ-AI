@@ -58,3 +58,9 @@ The `X-Applied` response header lists what was applied. Errors: 400 `bad_params`
       "http://localhost:8799/api/v1/videos/edit?trimStart=1&trimEnd=4&speed=1.5&width=480" -o out.mp4
     curl -X POST -H "Authorization: Bearer $IQAI_TOKEN" --data-binary @in.mp4 \
       "http://localhost:8799/api/v1/videos/thumbnail?at=2&width=320" -o thumb.jpg
+
+## Story video from scenes
+`POST /api/v1/videos/story` JSON `{"scenes":[{"imageId"?,"text"?,"seconds"?}, ...],"secondsPerScene"?,"width"?,"height"?,"effect"?,"transition"?:"fade|none","fontSize"?,"textColor"?,"bgColor"?,"sfx"?,"audioId"?}` -> mp4. `GET` lists the limits.
+- A scene is a stored photo (with an optional caption) or a text card. 1..30 scenes, 1..60 s each, 900 s in total.
+- `transition` `fade` fades each scene in and out through black. One sound (`sfx`, or a stored `audioId` that is looped) plays under the whole video with a fade in/out.
+- Errors: 400 `bad_params`/`bad_image`/`bad_audio`/`too_long`, 404, 413, 415, 422 `video_processing_failed`, 503 `ffmpeg_missing`/`font_missing`.
