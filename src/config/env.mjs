@@ -11,5 +11,6 @@ export function loadConfig(env = process.env) {
     jobsConcurrency: Math.max(1, Number(env.JOBS_CONCURRENCY) || 1),
     jobsTtlHours: Number(env.JOBS_TTL_HOURS) || 24,
     jobsMaxQueue: Number(env.JOBS_MAX_QUEUE) || 20,
+    projectsDir: env.PROJECTS_DIR || './data/projects',
   };
 }

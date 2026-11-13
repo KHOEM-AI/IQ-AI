@@ -17,6 +17,8 @@ import { handleVideoSlideshow } from "./routes/videoSlideshow.mjs";
 import { handleVideoStory } from "./routes/videoStory.mjs";
 import { handleVideoMerge } from "./routes/videoMerge.mjs";
 import { handleJobs } from "./routes/jobs.mjs";
+import { handleProjects } from "./routes/projects.mjs";
+import { createProjectStore } from "../projects/projectStore.mjs";
 import { createJobManager } from "../jobs/jobManager.mjs";
 import { createHandlers } from "../jobs/handlers.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
@@ -37,6 +39,7 @@ export function createApp(config) {
   if (!config.token) throw new Error("IQAI_TOKEN is required");
   const registry = createRegistry(createStorage(config.storageDir));
   const ctx = { config, registry };
+  ctx.projects = createProjectStore({ dir: config.projectsDir || "./data/projects" });
   // Background jobs. Persisted only when config.jobsDir is set (loadConfig sets ./data/jobs).
   ctx.jobs = createJobManager({
     handlers: createHandlers({ registry }),
@@ -94,6 +97,7 @@ export function createApp(config) {
         if (await handleMedia(req, res, p, ctx)) return;
         // before handleProcess: its old /jobs/:id stub would otherwise answer 404 for real jobs
         if (await handleJobs(req, res, p, ctx)) return;
+        if (await handleProjects(req, res, p, ctx)) return;
         if (await handleProcess(req, res, p)) return;
         if (await handleVideoGenerate(req, res, p)) return;
         if (await handleVideoEdit(req, res, p)) return;
