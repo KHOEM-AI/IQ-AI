@@ -1,12 +1,12 @@
 import { spawn } from 'node:child_process';
 
 // Runs ffmpeg with an args array (no shell). Caller manages its own temp files.
-// Optional `signal` (AbortSignal): aborting kills ffmpeg and rejects with code 'aborted' (used by background jobs).
-export function runFfmpegArgs(args, { timeoutMs = 120000, signal } = {}) {
+// Optional `cwd` (relative input/output names then resolve there). Optional `signal` (AbortSignal): aborting kills ffmpeg and rejects with code 'aborted' (used by background jobs).
+export function runFfmpegArgs(args, { timeoutMs = 120000, signal, cwd } = {}) {
   return new Promise((resolve, reject) => {
     const aborted = () => Object.assign(new Error('ffmpeg_aborted'), { code: 'aborted' });
     if (signal && signal.aborted) return reject(aborted());
-    const p = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    const p = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'], ...(cwd ? { cwd } : {}) });
     let err = '';
     let onAbort;
     const done = () => { clearTimeout(t); if (signal && onAbort) signal.removeEventListener('abort', onAbort); };

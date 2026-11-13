@@ -22,6 +22,8 @@ there is no per-frame progress yet), `params`, `result`, `error {code,message}`,
 |---|---|---|
 | `video.edit` | `mediaId`, optional `trimStart` `trimEnd` `speed` `mute` `width` `height` (same rules as `/videos/edit`) | `{ mediaId, size, applied }` |
 | `video.merge` | `ids` (2..20 media ids), optional `width` `height` `fps` (same rules as `/videos/merge`) | `{ mediaId, size, applied }` |
+| `video.mix` | `mediaId` (video), `narrationId` and/or `musicId` (**audio** media items: wav/ogg/mp3); optional `narrationVolume` (1) `musicVolume` (0.25) `originalVolume` (0 = drop the video's own sound) `duck` (true) `fadeIn` `fadeOut` (seconds) | `{ mediaId, size, applied }` |
+| `video.subtitle` | `mediaId` (video) and `cues: [{start,end,text}]` (seconds) **or** `srt` (SubRip text); optional `fontSize` `color` (#RRGGBB) `boxOpacity` (0..1) `position` (`bottom`\|`middle`\|`top`) | `{ mediaId, size, applied }` |
 
 Inputs are **media items** (upload with `POST /api/v1/media`). The result is also a media item, so download it with
 `GET /api/v1/media/:mediaId/content` (supports `Range`) or use it as the input of the next job (chaining).
@@ -34,6 +36,19 @@ J=$(curl -s -X POST -H "Authorization: Bearer $IQAI_TOKEN" -H 'Content-Type: app
 # poll: GET /api/v1/jobs/<id> until status is done, then GET /api/v1/media/<result.mediaId>/content
 ```
 (Never paste the token into chat or commit it.)
+
+## Audio mix and subtitles (Phases 3 and 4)
+- `video.mix`: narration starts at 0, music loops to the video length, **ducking** lowers the music while the narration speaks,
+  the result is exactly as long as the video (longer audio is cut). The picture is copied (mp4) or re-encoded (webm).
+  At least one of `narrationId` / `musicId` is required.
+- `video.subtitle`: burnt in with ffmpeg `drawtext` and the same Khmer font as text videos (`KHMER_FONT`, Noto Sans Khmer).
+  Lines are wrapped by Khmer display cluster, at most 3 lines per cue, at most **300 cues per call**: for a long story
+  add subtitles scene by scene, then merge (`video.merge`). `applied.truncatedCues` counts cues that did not fit in 3 lines.
+  Khmer shaping needs ffmpeg built with harfbuzz (the same requirement as `/videos/text`).
+  **Fonts:** Noto Sans Khmer has no Latin letters, so a cue that contains Khmer uses the Khmer font and any other cue uses a
+  Latin font (`LATIN_FONT=/path.ttf`, else Roboto / Noto Sans / DejaVu from the usual folders). A cue that **mixes** Khmer and
+  Latin uses the Khmer font, so its Latin letters do not show; `applied.mixedCues` counts them. Keep Latin names (e.g. KHOEM-AI)
+  in their own cue.
 
 ## Behaviour
 - **One job at a time** by default (`JOBS_CONCURRENCY=1`); others wait. More than `JOBS_MAX_QUEUE` waiting → **429 `queue_full`**.
