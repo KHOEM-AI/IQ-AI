@@ -10,7 +10,7 @@ import { synthSfx, SFX_TYPES } from '../audio/sfx/synth.mjs';
 // slides are joined with the concat demuxer (stream copy) and the audio is muxed on top.
 
 export const SLIDESHOW_LIMITS = {
-  slides: [1, 20], secondsPerSlide: [1, 15], side: [320, 1280], fontSize: [16, 96], caption: 300,
+  slides: [1, 20], secondsPerSlide: [1, 15], durationEach: [1, 30], totalSec: 300, side: [320, 1280], fontSize: [16, 96], caption: 300,
   totalImageBytes: 60 * 1024 * 1024,
 };
 export const SLIDE_EFFECTS = ['zoom-in', 'zoom-out', 'none'];
@@ -33,10 +33,12 @@ function motion(effect, frames, fps, w, h) {
 
 // images: Buffer[]; captions: (string|null)[] same length (optional);
 // audioBuf: optional Buffer (stored audio) used instead of sfx.
+// durations: optional number[] (one per image, seconds) instead of one secondsPerSlide for all,
+//   so each slide can last as long as the line spoken over it.
 // Returns { ok, buf, applied } or { ok:false, message, code }.
 export async function renderSlideshow({
   images, captions = [], secondsPerSlide, width, height, effect = 'zoom-in',
-  fontSize, textColor = '#ffffff', sfxType = null, audioBuf = null,
+  fontSize, textColor = '#ffffff', sfxType = null, audioBuf = null, durations = null,
 } = {}) {
   const [smin, smax] = SLIDESHOW_LIMITS.slides;
   if (!Array.isArray(images) || images.length < smin || images.length > smax) return bad(`slideshow needs ${smin}..${smax} images`);
@@ -50,6 +52,14 @@ export async function renderSlideshow({
   if (!w0.ok || !h0.ok) return bad(`width/height must be ${SLIDESHOW_LIMITS.side.join('..')}`);
   if (!fs0.ok) return bad(`fontSize must be ${SLIDESHOW_LIMITS.fontSize.join('..')}`);
   if (!HEX_COLOR.test(textColor)) return bad('textColor must be #RRGGBB');
+  if (durations !== null && durations !== undefined) {
+    const [dlo, dhi] = SLIDESHOW_LIMITS.durationEach;
+    if (!Array.isArray(durations) || durations.length !== images.length
+      || !durations.every((d) => typeof d === 'number' && Number.isFinite(d) && d >= dlo && d <= dhi)) {
+      return bad(`durations must be one number (${dlo}..${dhi} seconds) per image`);
+    }
+    if (durations.reduce((n, d) => n + d, 0) > SLIDESHOW_LIMITS.totalSec) return bad(`total duration must be at most ${SLIDESHOW_LIMITS.totalSec} seconds`);
+  }
   if (sfxType !== null && !SFX_TYPES.includes(sfxType)) return bad(`sfx must be one of: ${SFX_TYPES.join(', ')}`);
   if (sfxType && audioBuf) return bad('use either sfx or audioId, not both');
   if (!Array.isArray(captions) || captions.length > images.length) return bad('captions must be an array no longer than ids');
@@ -68,11 +78,11 @@ export async function renderSlideshow({
   const h = evenSize(h0.value);
   const fontPx = Math.round(fs0.value);
   const fps = 25;
-  const frames = Math.round(sec.value * fps);
+  const secs = Array.isArray(durations) ? durations.map((d) => Math.round(d * 100) / 100) : images.map(() => sec.value);
   const margin = Math.round(w * 0.08);
   const maxChars = Math.max(4, Math.floor((w - margin * 2) / (fontPx * 0.62)));
   const maxLines = Math.max(1, Math.floor((h * 0.3) / (fontPx * 1.3)));
-  const total = sec.value * images.length;
+  const total = secs.reduce((n, d) => n + d, 0);
 
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'iqai-ss-'));
   try {
@@ -85,7 +95,7 @@ export async function renderSlideshow({
       } catch {
         return bad(`image ${i + 1} could not be decoded`, 'bad_image');
       }
-      let vf = `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},${motion(effect, frames, fps, w, h)}`;
+      let vf = `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},${motion(effect, Math.round(secs[i] * fps), fps, w, h)}`;
       if (caps[i]) {
         const { lines } = wrapText(caps[i], maxChars, maxLines);
         const txt = path.join(dir, `cap${i}.txt`);
@@ -97,7 +107,7 @@ export async function renderSlideshow({
       vf += ',setsar=1,format=yuv420p';
       const out = path.join(dir, `part${i}.mp4`);
       await runFfmpegArgs([
-        '-nostdin', '-v', 'error', '-y', '-loop', '1', '-i', img, '-vf', vf, '-t', String(sec.value), '-r', String(fps),
+        '-nostdin', '-v', 'error', '-y', '-loop', '1', '-i', img, '-vf', vf, '-t', String(secs[i]), '-r', String(fps),
         '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-f', 'mp4', out,
       ], { timeoutMs: 120000 });
       parts.push(out);
@@ -138,7 +148,7 @@ export async function renderSlideshow({
     return {
       ok: true, buf,
       applied: {
-        slides: images.length, secondsPerSlide: sec.value, totalSec: total, width: w, height: h, effect,
+        slides: images.length, secondsPerSlide: sec.value, durations: Array.isArray(durations) ? secs : null, totalSec: total, width: w, height: h, effect,
         captions: caps.filter(Boolean).length, sfx: sfxType, audio: Boolean(audioBuf),
       },
     };

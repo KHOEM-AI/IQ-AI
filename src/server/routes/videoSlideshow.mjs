@@ -5,7 +5,8 @@ import { isValidId } from '../../media/registry.mjs';
 
 // POST /api/v1/videos/slideshow
 // JSON {"ids":["<image id>",...], "captions"?:[...], "secondsPerSlide"?, "width"?, "height"?,
-//       "effect"?:"zoom-in|zoom-out|none", "fontSize"?, "textColor"?, "sfx"?, "audioId"?:"<audio id>"}
+//       "effect"?:"zoom-in|zoom-out|none", "fontSize"?, "textColor"?, "sfx"?, "audioId"?:"<audio id>",
+//       "durations"?:[seconds per image, same length as ids]}
 // Joins stored images into one mp4 (Khmer captions, optional sound). GET /videos/slideshow lists the limits.
 export async function handleVideoSlideshow(req, res, p, ctx) {
   if (p !== '/api/v1/videos/slideshow') return false;
@@ -60,6 +61,7 @@ export async function handleVideoSlideshow(req, res, p, ctx) {
     const r = await renderSlideshow({
       images, captions: body.captions, secondsPerSlide: body.secondsPerSlide, width: body.width, height: body.height,
       effect: body.effect, fontSize: body.fontSize, textColor: body.textColor, sfxType: body.sfx ?? null, audioBuf,
+      durations: body.durations ?? null,
     });
     if (!r.ok && r.message === 'ffmpeg_failed') {
       console.error('slideshow error:', r.detail);

@@ -125,3 +125,24 @@ test('slideshow: Khmer captions render', async (t) => {
   assert.equal(res.status, 200);
   assert.equal(JSON.parse(res.headers.get('x-applied')).captions, 1);
 });
+
+test('slideshow: durations give every slide its own length', async (t) => {
+  if (!hasFfmpeg) return t.skip('ffmpeg missing');
+  const res = await slideshow({ ids: [ids.a, ids.b], durations: [1.5, 3], width: 320, height: 480 });
+  assert.equal(res.status, 200);
+  const applied = JSON.parse(res.headers.get('x-applied'));
+  assert.deepEqual(applied.durations, [1.5, 3]);
+  assert.equal(applied.totalSec, 4.5);
+  const f = await saveOut(res, 'out-durations.mp4');
+  const dur = Number(/duration=([\d.]+)/.exec(probe(f, 'format=duration'))[1]);
+  assert.ok(dur > 4 && dur < 5, `duration ${dur}`);
+});
+
+test('slideshow: bad durations -> 400', async (t) => {
+  if (!hasFfmpeg) return t.skip('ffmpeg missing');
+  assert.equal((await slideshow({ ids: [ids.a, ids.b], durations: [2] })).status, 400);
+  assert.equal((await slideshow({ ids: [ids.a], durations: [0.2] })).status, 400);
+  assert.equal((await slideshow({ ids: [ids.a], durations: [31] })).status, 400);
+  assert.equal((await slideshow({ ids: [ids.a], durations: ['3'] })).status, 400);
+  assert.equal((await slideshow({ ids: [ids.a], durations: 3 })).status, 400);
+});
