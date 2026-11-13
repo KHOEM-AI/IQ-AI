@@ -234,7 +234,7 @@ test('jobs: video.mix then video.subtitle chain through media ids', async (t) =>
     const nId = await upload(narr, 'audio/wav');
     const mId = await upload(music, 'audio/wav');
 
-    assert.deepEqual((await (await api('/jobs')).json()).data.types.sort(), ['video.edit', 'video.merge', 'video.mix', 'video.subtitle']);
+    assert.deepEqual((await (await api('/jobs')).json()).data.types.sort(), ['video.edit', 'video.merge', 'video.mix', 'video.story', 'video.subtitle']);
 
     const mix = await waitJob((await (await postJob({ type: 'video.mix', params: { mediaId: vId, narrationId: nId, musicId: mId, fadeOut: 1 } })).json()).data.id);
     assert.equal(mix.status, 'done', JSON.stringify(mix.error));

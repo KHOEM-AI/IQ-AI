@@ -235,7 +235,7 @@ test('jobs: list shows jobs; DELETE removes a finished job; a long job can be ca
   const j = await waitJob((await (await postJob({ type: 'video.edit', params: { mediaId: clipId, mute: true } })).json()).data.id);
   const list = (await (await api('/jobs')).json()).data;
   assert.ok(list.items.some((x) => x.id === j.id));
-  assert.deepEqual(list.types.sort(), ['video.edit', 'video.merge', 'video.mix', 'video.subtitle']);
+  assert.deepEqual(list.types.sort(), ['video.edit', 'video.merge', 'video.mix', 'video.story', 'video.subtitle']);
   assert.equal((await api(`/jobs/${j.id}`, { method: 'DELETE' })).status, 200);
   assert.equal((await api(`/jobs/${j.id}`)).status, 404);
 
