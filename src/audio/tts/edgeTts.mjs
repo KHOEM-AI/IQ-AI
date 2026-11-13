@@ -7,7 +7,10 @@ import path from 'node:path';
 import { runFfmpeg } from '../ffmpeg.mjs';
 
 // One base voice per language. Distinct characters come from the IQ-AI voice presets (DSP) applied afterwards.
-const VOICES = { km: 'km-KH-SreymomNeural' };
+const VOICES = {
+  km: 'km-KH-SreymomNeural',
+  en: 'en-US-GuyNeural',
+};
 export const TTS_LANGS = Object.keys(VOICES);
 
 function fail(code, message, detail) {
