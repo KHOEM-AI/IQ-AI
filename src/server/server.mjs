@@ -15,6 +15,7 @@ import { handleVideoGenerate } from "./routes/videoGenerate.mjs";
 import { handleVideoEdit } from "./routes/videoEdit.mjs";
 import { handleVideoSlideshow } from "./routes/videoSlideshow.mjs";
 import { handleAudioVoice } from "./routes/audioVoice.mjs";
+import { handleAudioDialogue } from "./routes/audioDialogue.mjs";
 import { handleAudioInspect } from "./routes/audioInspect.mjs";
 import { handleCapabilities } from "./routes/capabilities.mjs";
 import { serveStatic } from "./static.mjs";
@@ -73,6 +74,7 @@ export function createApp(config) {
         }
         if (await handleCapabilities(req, res, p, ctx)) return;
         if (await handleAudioVoice(req, res, p)) return;
+        if (await handleAudioDialogue(req, res, p)) return;
         if (await handleAudioInspect(req, res, p)) return;
         const audioHandler = await audioHandlerReady;
         if (await audioHandler(req, res)) return;
