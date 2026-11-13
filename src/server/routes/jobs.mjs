@@ -17,7 +17,7 @@ export async function handleJobs(req, res, p, ctx) {
     if (req.method !== 'POST') { fail(res, 405, 'method_not_allowed', 'Method not allowed'); return true; }
     let body;
     try {
-      const raw = (await readBody(req, 64 * 1024)).toString('utf8');
+      const raw = (await readBody(req, 256 * 1024)).toString('utf8');
       body = raw ? JSON.parse(raw) : {};
     } catch (e) {
       if (e && e.code === 'too_large') throw e;

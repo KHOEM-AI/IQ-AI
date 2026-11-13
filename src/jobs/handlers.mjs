@@ -2,6 +2,7 @@ import { renderVideoEdit } from '../video/editVideo.mjs';
 import { renderMerge, MERGE_LIMITS } from '../video/mergeVideos.mjs';
 import { renderMix } from '../video/mixAudio.mjs';
 import { renderSubtitles } from '../video/subtitles.mjs';
+import { renderStory, STORY_LIMITS } from '../video/story.mjs';
 import { isValidId } from '../media/registry.mjs';
 
 // Job handlers: they reuse the existing renderers (no duplicated logic) and store the finished video in
@@ -26,6 +27,16 @@ async function loadAudio(registry, id, what) {
   const meta = await registry.get(id);
   if (!meta) throw jobError(`Media not found: ${id}`, 'not_found');
   if (meta.type !== 'audio') throw jobError(`${what} is not an audio item: ${id}`, 'unsupported_type');
+  const buf = await registry.content(id);
+  if (!buf) throw jobError(`Media content missing: ${id}`, 'not_found');
+  return buf;
+}
+
+async function loadImage(registry, id) {
+  if (typeof id !== 'string' || !isValidId(id)) throw jobError('imageId must be a media id (UUID)');
+  const meta = await registry.get(id);
+  if (!meta) throw jobError(`Media not found: ${id}`, 'not_found');
+  if (meta.type !== 'image') throw jobError(`Media is not an image: ${id}`, 'unsupported_type');
   const buf = await registry.content(id);
   if (!buf) throw jobError(`Media content missing: ${id}`, 'not_found');
   return buf;
@@ -109,6 +120,34 @@ export function createHandlers({ registry }) {
         fontSize: params.fontSize, color: params.color, boxOpacity: params.boxOpacity, position: params.position,
       }), 'Could not add subtitles to this video');
       return { ...(await saveVideo(registry, r.buf, 'subtitled.mp4')), applied: r.applied };
+    },
+
+    // params: { scenes: [{ imageId?, text?, seconds? }, ...], secondsPerScene?, width?, height?, effect?, transition?,
+    //           fontSize?, textColor?, bgColor?, sfx?, audioId? }  (same rules as POST /videos/story)
+    // Progress moves after every scene. A scene is a stored photo (optional caption) or a text card.
+    async 'video.story'({ params, signal, setProgress }) {
+      const [min, max] = STORY_LIMITS.scenes;
+      const raw = params.scenes;
+      if (!Array.isArray(raw) || raw.length < min || raw.length > max || !raw.every((s) => s && typeof s === 'object' && !Array.isArray(s))) {
+        throw jobError(`scenes must be an array of ${min}..${max} objects`);
+      }
+      const scenes = [];
+      let bytes = 0;
+      for (const s of raw) {
+        const image = s.imageId ? await loadImage(registry, s.imageId) : null;
+        if (image) bytes += image.length;
+        if (bytes > MAX_JOB_VIDEO) throw jobError('the photos are too large together', 'too_large');
+        scenes.push({ image, text: s.text, seconds: s.seconds });
+      }
+      const audioBuf = params.audioId ? await loadAudio(registry, params.audioId, 'audioId') : null;
+      setProgress(0.02);
+      const r = check(await renderStory({
+        scenes, secondsPerScene: params.secondsPerScene, width: params.width, height: params.height,
+        effect: params.effect, transition: params.transition, fontSize: params.fontSize,
+        textColor: params.textColor, bgColor: params.bgColor, sfxType: params.sfx ?? null, audioBuf,
+        signal, onProgress: setProgress,
+      }), 'Could not create this story');
+      return { ...(await saveVideo(registry, r.buf, 'story.mp4')), applied: r.applied };
     },
   };
 }

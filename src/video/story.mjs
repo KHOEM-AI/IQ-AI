@@ -29,10 +29,14 @@ function motion(effect, frames, fps, w, h) {
 
 // scenes: [{ image?: Buffer, text?: string, seconds?: number }]
 // audioBuf: optional stored audio (looped / cut to the video length) instead of sfx.
+// signal: optional AbortSignal (background jobs): aborting kills ffmpeg and the promise REJECTS with code 'aborted'.
+// onProgress(0..1): called after every scene and every later step.
 export async function renderStory({
   scenes, secondsPerScene = 4, width, height, effect = 'zoom-in', transition = 'fade',
   fontSize, textColor = '#ffffff', bgColor = '#000000', sfxType = null, audioBuf = null,
+  signal, onProgress,
 } = {}) {
+  const progress = (v) => { try { if (onProgress) onProgress(v); } catch { /* progress is best effort */ } };
   const [smin, smax] = STORY_LIMITS.scenes;
   if (!Array.isArray(scenes) || scenes.length < smin || scenes.length > smax) return bad(`story needs ${smin}..${smax} scenes`);
   if (!STORY_EFFECTS.includes(effect)) return bad(`effect must be one of: ${STORY_EFFECTS.join(', ')}`);
@@ -89,8 +93,9 @@ export async function renderStory({
         const img = path.join(dir, `img${i}.bin`);
         await fs.writeFile(img, image);
         try {
-          await runFfmpegArgs(['-nostdin', '-v', 'error', '-i', img, '-frames:v', '1', '-f', 'null', '-'], { timeoutMs: 15000 });
-        } catch {
+          await runFfmpegArgs(['-nostdin', '-v', 'error', '-i', img, '-frames:v', '1', '-f', 'null', '-'], { timeoutMs: 15000, signal });
+        } catch (e) {
+          if (e && e.code === 'aborted') throw e;
           return bad(`scene ${i + 1}: the photo could not be decoded`, 'bad_image');
         }
         input = ['-loop', '1', '-i', img];
@@ -119,15 +124,17 @@ export async function renderStory({
       await runFfmpegArgs([
         '-nostdin', '-v', 'error', '-y', ...input, '-vf', vf, '-t', String(sec), '-r', String(fps),
         '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-f', 'mp4', out,
-      ], { timeoutMs: 60000 + sec * 6000 });
+      ], { timeoutMs: 60000 + sec * 6000, signal });
       parts.push(out);
+      progress(0.02 + 0.85 * ((i + 1) / list.length));
     }
 
     const listFile = path.join(dir, 'list.txt');
     await fs.writeFile(listFile, parts.map((p) => `file '${q(p)}'`).join('\n'), 'utf8');
     const joined = path.join(dir, 'joined.mp4');
     await runFfmpegArgs(['-nostdin', '-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', listFile,
-      '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4', joined], { timeoutMs: 180000 });
+      '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4', joined], { timeoutMs: 180000, signal });
+    progress(0.9);
 
     let finalPath = joined;
     let audioFile = null;
@@ -151,13 +158,15 @@ export async function renderStory({
           '-map', '0:v:0', '-map', '1:a:0',
           '-af', `afade=t=in:st=0:d=1,afade=t=out:st=${Math.max(0, total - 1.5)}:d=1.5`,
           '-c:v', 'copy', '-c:a', 'aac', '-t', String(total), '-movflags', '+faststart', '-f', 'mp4', muxed,
-        ], { timeoutMs: 180000 });
+        ], { timeoutMs: 180000, signal });
       } catch (e) {
+        if (e && e.code === 'aborted') throw e;
         if (audioBuf) return bad('audio could not be decoded', 'bad_audio');
         throw e;
       }
       finalPath = muxed;
     }
+    progress(0.97);
     const buf = await fs.readFile(finalPath);
     return {
       ok: true, buf,
@@ -168,6 +177,7 @@ export async function renderStory({
       },
     };
   } catch (e) {
+    if (e && e.code === 'aborted') throw e;
     return { ok: false, message: 'ffmpeg_failed', detail: e && (e.detail || e.message) };
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
