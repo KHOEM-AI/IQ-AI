@@ -33,7 +33,19 @@ for (const c of clips) if (!existsSync(c)) die('file not found: ' + c);
 if (!TOKEN) die('IQAI_TOKEN is missing (set it in ~/IQ-AI/.env)');
 
 async function call(method, path, { body, headers } = {}) {
-  const res = await fetch(API + path, { method, body, headers: { authorization: 'Bearer ' + TOKEN, ...headers } });
+  // network retry: the server closes idle keep-alive sockets after 5 s, so a reused socket can fail (EPIPE/ECONNRESET)
+  let res;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      res = await fetch(API + path, { method, body, headers: { authorization: 'Bearer ' + TOKEN, ...headers } });
+      break;
+    } catch (e) {
+      const code = (e && e.cause && e.cause.code) || (e && e.message);
+      if (attempt >= 4 || (method === 'POST' && path === '/jobs')) die(`${method} ${path} network error: ${code}`);
+      console.error(`  retry ${attempt}/3 (${code})`);
+      await sleep(500 * attempt);
+    }
+  }
   const isJson = (res.headers.get('content-type') || '').includes('json');
   const data = isJson ? await res.json() : Buffer.from(await res.arrayBuffer());
   if (!res.ok) die(`${method} ${path} -> ${res.status} ${isJson ? JSON.stringify(data.error ?? data) : '(binary)'}`);
