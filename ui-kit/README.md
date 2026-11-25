@@ -1,3 +1,7 @@
+> ⚠️ **ចំណាំ (2026-11-24)៖** repo `AI` មានការភ្ជាប់ IQ-AI រួចហើយ (`src/api/client.ts`, `AvStudio`, `CreatePanel`,
+> `MediaLibrary`, `SoundLibrary`, `IqaiCenter`)។ **កុំចម្លង `IqAiStudio.tsx` / `iqaiClient.ts` ទៅ AI** ព្រោះវាស្ទួន។
+> ប្រើវាជាឯកសារយោងតែប៉ុណ្ណោះ។ Token សម្រាប់ proxy `/iqai` ត្រូវបានអានពី `~/IQ-AI/.env` ឬ `~/.iqai-token` ស្វ័យប្រវត្តិ។
+
 # ui-kit · ភ្ជាប់ IQ-AI ទៅ UI (repo `AI`)
 
 ឯកសារ ២ ក្នុងថតនេះ ចម្លងទៅ repo `AI`៖
